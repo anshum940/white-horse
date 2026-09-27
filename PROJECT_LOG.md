@@ -11,7 +11,7 @@ This file is the durable source of truth for the White Horse financial-statement
 - Application status: The production PWA is live. Strict type checking passes, all 16 automated tests pass, the current dependency audit reports zero known vulnerabilities, the service worker is generated, and desktop/mobile/cached-offline/live-site QA has passed.
 - Public URL status: **Live and verified over enforced HTTPS:** `https://anshum940.github.io/white-horse/`.
 - Source repository: **Public:** `https://github.com/anshum940/white-horse` (`main`).
-- Deployment status: GitHub Actions run `36305550565`, attempt 2, completed successfully for commit `587c98a1b4e3a8b1a0eddbc00d2b99bdde19387e`; both `Verify and build` and `Deploy to Pages` passed.
+- Deployment status: The initial application run `36305550565` (attempt 2) and the final documentation-triggered run `36305988448` both completed successfully. The currently deployed verified revision is `fcf780d5da0b8989ac4fa44d6357751940ed5c50`.
 - Preferred hosting direction: GitHub Pages for a stable HTTPS demonstration URL. The application is implemented as a local-first static PWA and the source repository may be public.
 - Repository visibility: Public, explicitly approved by the user on 2026-09-27.
 
@@ -521,6 +521,14 @@ An independent visible browser then opened the exact public URL, not a localhost
 
 GitHub Pages is the finished hosting solution. It provides a stable public HTTPS address, requires no always-on laptop or tunnel process, and preserves the application's privacy model because financial workspaces remain in each visitor's browser storage. The public build contains synthetic demonstration data only. A visitor does not receive records stored in another browser, and clearing site storage can remove that visitor's local workspace, so exports/backups remain the portability mechanism.
 
+### Final documentation deployment and handoff closure
+
+The first documentation handoff commit was `fcf780d5da0b8989ac4fa44d6357751940ed5c50` with subject `docs: record verified Pages deployment`. It triggered workflow run `36305988448`; the full verification and deployment workflow completed successfully without intervention.
+
+The first status-list command used the guessed display name `Deploy White Horse to GitHub Pages` and returned `could not find any workflows named ...`. Root cause: the workflow's actual `name:` is `Verify and deploy White Horse`. Repeating the read-only query with that exact name found the queued run. This lookup error did not change the repository, workflow, or deployment.
+
+This closing log update changes only `PROJECT_LOG.md`. Its commit message will include `[skip ci]`, which GitHub officially documents as suppressing workflows triggered by `push` or `pull_request`. This prevents an infinite operational loop in which documenting a successful documentation-only deployment continuously creates another identical deployment to document. The application artifact from the immediately preceding successful full gate remains the deployed artifact.
+
 ## Authoritative references
 
 - Cloudflare Quick Tunnels: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/
@@ -537,6 +545,7 @@ GitHub Pages is the finished hosting solution. It provides a stable public HTTPS
 - GitHub Pages publishing source: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
 - GitHub authentication guidance: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github
 - GitHub CLI browser/device authentication: https://cli.github.com/manual/gh_auth_login
+- GitHub Actions skip instructions: https://docs.github.com/en/actions/how-tos/manage-workflow-runs/skip-workflow-runs
 - Vite static-site deployment: https://vite.dev/guide/static-deploy.html
 
 ## Change history
@@ -552,3 +561,4 @@ GitHub Pages is the finished hosting solution. It provides a stable public HTTPS
 - 2026-09-27: Added SHA-pinned least-privilege GitHub Pages CI/CD, Dependabot, README, privacy/security boundaries, user and deployment guides, and recorded current official-source/action-tag verification. Ready for fresh GitHub device authentication.
 - 2026-09-27: Completed fresh device authentication as `anshum940`, configured repository-local no-reply Git identity, passed final hygiene checks, committed the verified application, created and pushed the approved public repository, and enabled GitHub Pages with enforced HTTPS.
 - 2026-09-27: Diagnosed the initial one-time Pages activation race, enabled workflow-based Pages publishing, reran only the failed work, and verified successful build/deployment run `36305550565` (attempt 2). Confirmed HTTP 200 for the app shell, manifest, service worker, and icon, then completed live public-browser navigation, statement, export, console, and PWA-ready checks.
+- 2026-09-27: Pushed the deployment-evidence documentation commit and verified its complete follow-up workflow `36305988448` succeeded. Corrected a harmless workflow display-name lookup error and prepared this closing documentation-only commit with GitHub's documented `[skip ci]` marker to avoid an otherwise recursive redundant deployment.
