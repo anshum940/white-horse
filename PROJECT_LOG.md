@@ -735,3 +735,30 @@ These sources support the explicit scope boundary: Division I, Division II, and 
 The working tree is ready for commit and public Pages deployment. The supported current product boundary is multi-company, standalone Schedule III Division I, non-Ind AS, commercial/industrial preparation with professional review. Before selling it as a production SaaS or claiming support for every company, the next programme must add separately validated Division II/III and sector packs, server-side tenant isolation, real identity and role enforcement, central backups, observability, incident/support operations, privacy/legal review, licensing, automated migration/retention controls, and independent accounting/security acceptance testing.
 
 Immediately before publication, repository-local Git identity was reverified as `Anshum <105625445+anshum940@users.noreply.github.com>` and the `origin` remote as `https://github.com/anshum940/white-horse.git`. `gh auth status` found the previously saved token invalid, so no push was attempted. A fresh GitHub CLI web/device flow was completed and independently verified against the GitHub API as active account `anshum940` (numeric ID `105625445`); token contents were not printed or stored in project documentation.
+
+### Product-hardening commit and public deployment
+
+The verified changes were committed and pushed:
+
+```text
+Commit:  ce085b85b6126e4fbfc655b28d38f2f6bd86e18a
+Subject: feat: productize multi-company financial reporting
+Author:  Anshum <105625445+anshum940@users.noreply.github.com>
+Remote:  https://github.com/anshum940/white-horse.git
+Branch:  main
+```
+
+Push output confirmed `1c3f350..ce085b8  main -> main`. GitHub Actions run `36340320430` (`https://github.com/anshum940/white-horse/actions/runs/36340320430`) completed successfully. Its `Verify and build` job passed locked dependency installation, dependency audit, type-check, all tests, production PWA build, Pages configuration and artifact upload in approximately 20 seconds. `Deploy to Pages` passed in approximately 7 seconds. The only annotation remains GitHub's informational future migration of `ubuntu-latest` to Ubuntu 26 beginning 19 October 2026.
+
+Public-origin verification returned HTTP 200 with HSTS and `https_enforced: true`. The live HTML references the expected final asset revisions:
+
+```text
+/white-horse/assets/index-CiqFzYZT.js
+/white-horse/assets/index-D0faL213.css
+```
+
+A cache-clean Chrome session then loaded `https://anshum940.github.io/white-horse/` from the public origin and visibly confirmed `Abhijit`, the dynamic workflow, the prescribed TB-format modal with all eight columns, and a successful complete financial-statement workbook export. The deployed browser console had zero warnings/errors.
+
+An existing in-app browser profile initially showed the older `Aarav Mehta` shell despite the new network HTML. Root cause: the profile already had the former PWA service worker and shell cache controlling that origin. This does not affect a new visitor or cache-clean profile. Existing users should save/export current work, accept the application's update prompt when shown, or close every White Horse tab and reopen the site. They should not clear site data without an encrypted backup because that would remove browser-local company workspaces.
+
+This deployment evidence will be saved in a documentation-only follow-up commit using GitHub's documented `[skip ci]` marker, avoiding a redundant second application deployment solely to record the deployment that already succeeded.
