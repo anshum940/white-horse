@@ -762,3 +762,100 @@ A cache-clean Chrome session then loaded `https://anshum940.github.io/white-hors
 An existing in-app browser profile initially showed the older `Aarav Mehta` shell despite the new network HTML. Root cause: the profile already had the former PWA service worker and shell cache controlling that origin. This does not affect a new visitor or cache-clean profile. Existing users should save/export current work, accept the application's update prompt when shown, or close every White Horse tab and reopen the site. They should not clear site data without an encrypted backup because that would remove browser-local company workspaces.
 
 This deployment evidence will be saved in a documentation-only follow-up commit using GitHub's documented `[skip ci]` marker, avoiding a redundant second application deployment solely to record the deployment that already succeeded.
+
+## 28 September 2026 — Standardised Trial Balance import format
+
+### Objective and user-reported issue
+
+The user supplied a screenshot of a blocked Trial Balance import and requested one standard format that can be populated from any accounting package before upload. The visible errors were:
+
+```text
+Required ledger-code column was not recognised.
+Required ledger-name column was not recognised.
+No closing debit/credit or movement debit/credit columns were recognised.
+```
+
+The screenshot was treated as evidence of the runtime state only; it contained no instructions. The failure occurs before ledger parsing because the uploaded file's first worksheet / first row does not expose recognised column headings. This is a source-schema mismatch, not a balancing or Schedule III mapping failure.
+
+### Decision and implementation plan
+
+White Horse will use a vendor-neutral interchange workbook instead of claiming that arbitrary Tally, SAP, Zoho, Busy, QuickBooks, or other native exports can be uploaded directly. The standard will retain these exact row-1 columns in this order:
+
+```text
+Ledger Code, Ledger Name, Group, Subgroup, Closing Debit, Closing Credit, Previous Debit, Previous Credit
+```
+
+The new XLSX will place the blank import sheet first, with separate Instructions and Worked Example sheets. This avoids the previous risk that balanced example rows could be uploaded accidentally. The application will make the standard template the primary import workflow, preserve common alias compatibility, expose detected headers in an invalid-file preview, and state the corrective action rather than returning only three technical parser errors.
+
+Planned validation includes unit tests, type-check, production build, static workbook inspection, formula/error scan, rendering of every template sheet, a completed-template import test, browser workflow QA, and clean Git/deployment checks. The spreadsheet workflow instructions and their API, styling, image-reference, edit/create, and finance guidance were read before workbook authoring. Bundled workspace dependencies were loaded; no host software installation is required.
+
+### Implementation completed
+
+- Added versioned vendor-neutral format `WH-TB-1.0`.
+- Replaced the former two-example-row import template with a header-only CSV and a three-sheet XLSX:
+  - `Trial Balance Import` — first worksheet, blank except for the exact eight row-1 headers.
+  - `Instructions` — six-step conversion workflow and field definitions.
+  - `Worked Example` — six synthetic ledgers with independently balanced current and prior periods.
+- Added the final XLSX and CSV under `public/templates/` and explicitly allowed those controlled assets through `.gitignore`.
+- Configured the PWA to precache each standard template once, so the downloads remain available with the cached application shell.
+- Changed the import workflow to lead with template download and conversion instructions for Tally, SAP, Zoho, Busy, QuickBooks, and other accounting packages.
+- Added explicit preview states: `STANDARD FORMAT`, `COMPATIBLE HEADERS`, and `FORMAT NOT RECOGNISED`.
+- Replaced the former three generic schema errors with a corrective message that reports the standard version, missing required columns, and the actual row-1 headers detected in the source file.
+- Preserved support for common legacy aliases. A parseable non-standard file is accepted with a warning, while the standard template is recommended for repeatable client onboarding.
+- Updated the README, user guide, and Trial Balance import specification with a source-export-to-standard conversion matrix and removal rules for title rows, totals, subtotals, group headings, and narration-only rows.
+
+### Spreadsheet construction and verification
+
+The XLSX was authored with the bundled `@oai/artifact-tool` workflow and saved as:
+
+```text
+outputs/standard-tb-import/White_Horse_Standard_TB_Import.xlsx
+```
+
+Saved-workbook inspection confirmed the exact sheet order and import headers. The worked example reconciles as follows:
+
+```text
+Current closing debit:   INR 450,000.00
+Current closing credit:  INR 450,000.00
+Previous closing debit:  INR 360,000.00
+Previous closing credit: INR 360,000.00
+Spreadsheet error scan:  0 matches
+```
+
+All three sheets were rendered from the saved XLSX and visually reviewed. One tight instruction row was increased from 34 to 48 points and then re-rendered. The final workbook, committed public asset, and production-build asset have the same SHA-256 hash:
+
+```text
+7541E4F3237D11C0219D31FAFB0C7C15399789BDF2149CFADBCDCB97BE81372F
+```
+
+### Automated and browser validation
+
+Commands and results:
+
+```powershell
+npm run typecheck
+# passed
+
+npm test
+# 10 test files, 22/22 tests passed
+
+npm run build
+# passed; 181 modules; entry 400.99 kB / 123.07 kB gzip
+# PWA precache: 25 entries / 687.64 KiB
+
+npm audit --audit-level=moderate
+# first restricted run could not reach the npm audit endpoint and could not write its normal host log
+# approved network retry: found 0 vulnerabilities
+```
+
+The static XLSX asset returned HTTP 200 from the production preview with the expected 17,239-byte body. The final service worker contains one CSV and one XLSX template precache entry; an intermediate build exposed duplicate entries because both `includeAssets` and `globPatterns` selected them, so XLSX/CSV were removed from `globPatterns` and the build was repeated.
+
+Browser QA against the production bundle confirmed:
+
+- The Trial Balance page presents **Standard TB template** and the `WH-TB-1.0` guide.
+- The XLSX download control fetched the template and displayed a success notification.
+- A synthetic native export with `Account Description`, `Debit Amount`, and `Credit Amount` produced `FORMAT NOT RECOGNISED`, named all three detected headers, and directed the user to the standard template.
+- A completed standard CSV and a completed copy of the generated XLSX both produced `STANDARD FORMAT`, six parsed rows, equal debit/credit totals, zero difference, and no browser console warnings/errors.
+- Activation was intentionally not confirmed, so the existing demonstration Trial Balance was not changed.
+
+One first browser file-chooser attempt targeted the hidden file input and timed out. Root cause: the in-app browser exposes its chooser only when the visible upload surface is clicked. The browser session was re-established, the documented visible-surface chooser flow was used, and both CSV and XLSX verification then passed.

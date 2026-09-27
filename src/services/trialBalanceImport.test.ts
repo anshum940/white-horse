@@ -19,6 +19,7 @@ describe('Trial Balance import', () => {
     );
     const preview = await parseTrialBalanceFile(file);
     expect(preview.errors).toEqual([]);
+    expect(preview.formatStatus).toBe('COMPATIBLE');
     expect(preview.rows).toHaveLength(2);
     expect(preview.debitTotalPaise).toBe(100_000);
     expect(preview.creditTotalPaise).toBe(100_000);
@@ -33,5 +34,19 @@ describe('Trial Balance import', () => {
     const preview = await parseTrialBalanceFile(file);
     expect(preview.errors.some((error) => error.includes('difference'))).toBe(true);
     expect(preview.differencePaise).toBe(10_000);
+  });
+
+  it('explains how to correct an unrecognised source-system export', async () => {
+    const file = new File(
+      ['Account Description,Debit Amount,Credit Amount\nCash,1000,0\nCapital,0,1000\n'],
+      'native-export.csv',
+      { type: 'text/csv' }
+    );
+    const preview = await parseTrialBalanceFile(file);
+
+    expect(preview.formatStatus).toBe('INVALID');
+    expect(preview.detectedHeaders).toEqual(['Account Description', 'Debit Amount', 'Credit Amount']);
+    expect(preview.errors).toContain('Missing required row-1 columns: Ledger Code, Ledger Name, Closing Debit and Closing Credit.');
+    expect(preview.errors.some((error) => error.includes('Download the template'))).toBe(true);
   });
 });

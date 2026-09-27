@@ -8,7 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['white-horse.svg'],
+      includeAssets: [
+        'white-horse.svg',
+        'templates/White_Horse_Standard_TB_Import.xlsx',
+        'templates/White_Horse_Standard_TB_Import.csv'
+      ],
       manifest: {
         name: 'White Horse — Financial Statements Workspace',
         short_name: 'White Horse',

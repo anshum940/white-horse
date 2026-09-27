@@ -2,6 +2,7 @@ node_modules/
 dist/
 .npm-cache/
 coverage/
+outputs/
 .vite/
 *.local
 *.log
@@ -16,5 +17,7 @@ white-horse-backup-*.whbackup
 *.csv
 !.github/fixtures/*.csv
 !samples/*.csv
+!public/templates/*.xlsx
+!public/templates/*.csv
 Thumbs.db
 .DS_Store

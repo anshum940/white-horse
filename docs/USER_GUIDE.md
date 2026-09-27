@@ -20,15 +20,16 @@ Use **Edit setup** to correct the active company/period. Use **Add local user** 
 
 ### Trial Balance
 
-1. Select **TB import format** and download the CSV or XLSX template.
-2. Delete both example rows and use these exact row-1 headers, in order: `Ledger Code`, `Ledger Name`, `Group`, `Subgroup`, `Closing Debit`, `Closing Credit`, `Previous Debit`, `Previous Credit`.
-3. Enter positive amounts in INR, not lakhs or crores. Use either the debit or credit column for a balance, never both. Do not add total rows, formulas, macros, or merged cells.
-4. Select **Import Trial Balance** and choose `.xlsx` or `.csv` up to 25 MB and 50,000 data rows. For XLSX, put the table on the first worksheet.
-5. Review recognised columns, row errors, comparative warnings, debit/credit totals, and content hash.
-6. Activate only an error-free, non-empty Trial Balance whose closing debit and credit totals agree exactly in paise.
-7. Activation creates a new immutable import version and retains the former import as superseded.
+1. Select **Standard TB template** and download the XLSX template (`WH-TB-1.0` is recommended) or CSV header template.
+2. Export a ledger-level Trial Balance from Tally, SAP, Zoho, Busy, QuickBooks, or another accounting package. Copy the values into the blank first template sheet; instructions and examples are on separate sheets.
+3. Keep these exact row-1 headers, in order: `Ledger Code`, `Ledger Name`, `Group`, `Subgroup`, `Closing Debit`, `Closing Credit`, `Previous Debit`, `Previous Credit`.
+4. Enter positive amounts in INR, not lakhs or crores. Use either the debit or credit column for a balance, never both. Do not add title rows, totals, formulas, macros, merged cells, group headings, subtotals, or narration-only rows.
+5. Select **Import Trial Balance** and choose the completed standard `.xlsx` or `.csv` file, up to 25 MB and 50,000 data rows. For XLSX, the import table must remain on the first worksheet.
+6. Review the format status, detected headers, row errors, comparative warnings, debit/credit totals, and content hash. `STANDARD FORMAT` confirms the exact `WH-TB-1.0` layout; `COMPATIBLE HEADERS` is accepted but should be converted for the next repeatable import.
+7. Activate only an error-free, non-empty Trial Balance whose closing debit and credit totals agree exactly in paise.
+8. Activation creates a new immutable import version and retains the former import as superseded.
 
-The repository includes `samples/white-horse-tb-template.csv` as the prescribed blank-company format and `samples/saffron-trial-balance.csv` as a populated synthetic demonstration. See `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` for aliases, optional movement/opening columns, limits, and control rules.
+The repository includes `samples/white-horse-tb-template.csv` as the header-only standard format and `samples/saffron-trial-balance.csv` as a populated synthetic demonstration. See `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` for the source-to-standard conversion table, aliases, optional movement/opening columns, limits, and control rules.
 
 ### Mapping
 

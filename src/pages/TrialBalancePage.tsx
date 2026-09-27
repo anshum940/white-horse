@@ -6,7 +6,8 @@ import { downloadTrialBalanceCsv } from '../services/csvExport';
 import {
   downloadTrialBalanceTemplateCsv,
   downloadTrialBalanceTemplateXlsx,
-  trialBalanceTemplateColumns
+  trialBalanceTemplateColumns,
+  trialBalanceTemplateVersion
 } from '../services/trialBalanceTemplate';
 import { Icon } from '../components/Icon';
 import { Modal, PageHeader, StatusBadge } from '../components/ui';
@@ -73,7 +74,7 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
     setTemplateBusy(true);
     try {
       await downloadTrialBalanceTemplateXlsx();
-      notify('Prescribed XLSX Trial Balance template downloaded.', 'success');
+      notify('Standard TB XLSX template downloaded.', 'success');
     } catch (error) {
       notify(error instanceof Error ? error.message : 'Unable to create the XLSX template.', 'error');
     } finally {
@@ -83,7 +84,7 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
 
   function downloadCsvTemplate() {
     downloadTrialBalanceTemplateCsv();
-    notify('Prescribed CSV Trial Balance template downloaded.', 'success');
+    notify('Standard TB CSV template downloaded.', 'success');
   }
 
   return (
@@ -94,7 +95,7 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
         description="Review source balances, provenance, comparatives, and control totals before mapping."
         actions={
           <>
-            <button className="button button-secondary" onClick={() => setShowFormat(true)}><Icon name="info" size={16}/> TB import format</button>
+            <button className="button button-secondary" onClick={() => setShowFormat(true)}><Icon name="info" size={16}/> Standard TB template</button>
             <button className="button button-secondary" onClick={exportCsv}><Icon name="download" size={16}/> Export CSV</button>
             <button className="button button-primary" onClick={() => setShowImport(true)}><Icon name="upload" size={16}/> Import Trial Balance</button>
           </>
@@ -137,12 +138,12 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
 
       {showFormat && (
         <Modal
-          title="Prescribed Trial Balance import format"
-          description="Use these exact column names for repeatable onboarding. Amounts are positive INR values—not lakhs or crores."
+          title="White Horse Standard TB format"
+          description={`Vendor-neutral import format ${trialBalanceTemplateVersion}. Use it for every company and accounting package.`}
           onClose={() => setShowFormat(false)}
           footer={<><button className="button button-secondary" onClick={downloadCsvTemplate}><Icon name="download" size={16}/> Download CSV</button><button className="button button-primary" disabled={templateBusy} onClick={() => void downloadXlsxTemplate()}><Icon name="download" size={16}/> {templateBusy ? 'Creating…' : 'Download XLSX'}</button></>}
         >
-          <div className="message-box message-warning"><Icon name="warning"/><div><strong>Replace the example rows</strong><p>Delete both EXAMPLE rows and insert the complete company ledger population before import.</p></div></div>
+          <div className="message-box message-warning"><Icon name="warning"/><div><strong>Do not upload an accounting-software export directly</strong><p>Download this template, copy the ledger-level balances into the first sheet, keep row 1 unchanged, and then upload the completed template. Instructions and examples are kept on separate sheets.</p></div></div>
           <div className="table-scroll"><table className="data-table"><thead><tr><th>Column</th><th>Requirement</th><th>Rule</th></tr></thead><tbody>{trialBalanceTemplateColumns.map((column) => <tr key={column.name}><td><strong>{column.name}</strong></td><td><StatusBadge tone={column.requirement === 'Required' ? 'blue' : 'neutral'}>{column.requirement}</StatusBadge></td><td>{column.rule}</td></tr>)}</tbody></table></div>
           <div className="editor-guidance"><Icon name="info" size={16}/><div><strong>File controls</strong><p>CSV/XLSX, header on row 1, first XLSX worksheet, maximum 25 MB / 50,000 data rows. Closing debits must equal closing credits exactly in paise. Do not include totals, merged cells, formulas or macros.</p></div></div>
         </Modal>
@@ -150,8 +151,8 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
 
       {showImport && (
         <Modal
-          title="Import Trial Balance"
-          description="Files are parsed in this browser. They are not uploaded to a server."
+          title="Import Standard Trial Balance"
+          description="Convert any accounting-software export to the White Horse Standard TB format before upload. Files remain in this browser."
           onClose={() => { setShowImport(false); setPreview(undefined); }}
           footer={
             <>
@@ -162,15 +163,36 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
             </>
           }
         >
+          <div className="standard-format-card">
+            <div>
+              <StatusBadge tone="blue">{trialBalanceTemplateVersion}</StatusBadge>
+              <strong>Download the blank standard template first</strong>
+              <p>Copy ledger balances from Tally, SAP, Zoho, Busy, QuickBooks, or another system into the first sheet. Do not rename or move the eight headers.</p>
+            </div>
+            <div className="standard-format-actions">
+              <button className="button button-primary" disabled={templateBusy} onClick={() => void downloadXlsxTemplate()}><Icon name="download" size={16}/> {templateBusy ? 'Downloading…' : 'XLSX template'}</button>
+              <button className="button button-secondary" onClick={downloadCsvTemplate}><Icon name="download" size={16}/> CSV template</button>
+            </div>
+          </div>
+          <ol className="standard-import-steps">
+            <li>Export the Trial Balance from the source accounting software.</li>
+            <li>Copy ledger-level values into the blank White Horse template in INR.</li>
+            <li>Confirm closing debit equals closing credit, then upload the completed template below.</li>
+          </ol>
           <div className="import-zone" onClick={() => fileRef.current?.click()}>
             <span className="import-icon"><Icon name="upload" size={24}/></span>
-            <strong>{busy ? 'Reading and validating…' : 'Choose an Excel or CSV Trial Balance'}</strong>
-            <p>.xlsx or .csv · maximum 25 MB and 50,000 rows</p>
+            <strong>{busy ? 'Reading and validating…' : 'Upload the completed Standard TB file'}</strong>
+            <p>.xlsx or .csv · first worksheet · row-1 headers unchanged · maximum 25 MB and 50,000 rows</p>
             <input ref={fileRef} type="file" accept=".xlsx,.csv" hidden onChange={(event) => void handleFile(event.target.files?.[0])}/>
           </div>
-          <div className="template-shortcuts"><span>Need the required format?</span><button className="text-button" onClick={downloadCsvTemplate}>Download CSV template</button><button className="text-button" disabled={templateBusy} onClick={() => void downloadXlsxTemplate()}>Download XLSX template</button></div>
           {preview && (
             <div className="import-preview">
+              <div className="format-result">
+                <StatusBadge tone={preview.formatStatus === 'STANDARD' ? 'green' : preview.formatStatus === 'COMPATIBLE' ? 'amber' : 'red'}>
+                  {preview.formatStatus === 'STANDARD' ? 'STANDARD FORMAT' : preview.formatStatus === 'COMPATIBLE' ? 'COMPATIBLE HEADERS' : 'FORMAT NOT RECOGNISED'}
+                </StatusBadge>
+                <span>{preview.formatStatus === 'STANDARD' ? `${trialBalanceTemplateVersion} headers verified.` : preview.formatStatus === 'COMPATIBLE' ? 'The file can be parsed, but use the standard template for the next import.' : 'Copy the source data into the downloaded standard template and upload that completed file.'}</span>
+              </div>
               <div className="preview-summary">
                 <div><span>Rows</span><strong>{preview.rows.length}</strong></div>
                 <div><span>Debit</span><strong>{formatMoney(preview.debitTotalPaise, workspace.company.displayScale)}</strong></div>

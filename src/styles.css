@@ -254,6 +254,13 @@ main { min-height: calc(100vh - 72px); }
 .mini-preview th { background: #f4f3ee; }
 .confirmation-check { margin-top: 13px; display: flex; align-items: flex-start; gap: 8px; font-size: 9px; line-height: 1.45; }
 .template-shortcuts { margin-top: 10px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 8px; }
+.standard-format-card { margin-bottom: 12px; padding: 13px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #c9ddd5; border-radius: 9px; background: var(--green-50); }
+.standard-format-card > div:first-child { min-width: 0; }
+.standard-format-card strong { display: block; margin-top: 7px; font-size: 10px; }
+.standard-format-card p { max-width: 540px; margin: 4px 0 0; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.standard-format-actions { flex: 0 0 auto; display: flex; gap: 7px; }
+.standard-import-steps { margin: 0 0 12px; padding: 0 0 0 21px; color: #4e5956; font-size: 8px; line-height: 1.55; }
+.format-result { margin-bottom: 10px; display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 8px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-grid label, .field, .editor-label { display: flex; flex-direction: column; gap: 5px; }
 .form-grid label > span, .field > span, .editor-label > span, .note-editor header label span { color: #4e5956; font-size: 8px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
@@ -460,6 +467,8 @@ textarea { padding: 10px; resize: vertical; line-height: 1.5; }
   .adjustment-card { grid-template-columns: 1fr; }.adjustment-amount { align-items: flex-start; }.journal-lines { grid-column: auto; grid-template-columns: 1fr; }.review-actions, .review-comment { grid-column: auto; }
   .mapping-summary { grid-template-columns: 1fr; }
   .preview-summary { grid-template-columns: 1fr 1fr; }
+  .standard-format-card { align-items: stretch; flex-direction: column; }
+  .standard-format-actions { flex-wrap: wrap; }
   .page-actions .button { flex: 1; }
 }
 

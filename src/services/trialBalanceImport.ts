@@ -3,6 +3,7 @@ import { rupeesToPaise, sumMoney } from '../domain/money';
 import { sha256 } from '../domain/security';
 import type { LedgerAccount, LedgerMapping, TrialBalanceImport } from '../domain/types';
 import { taxonomyByCode } from '../data/taxonomy';
+import { trialBalanceTemplateHeaders, trialBalanceTemplateVersion } from './trialBalanceTemplate';
 
 type CellValue = string | number | boolean | Date | null | undefined;
 
@@ -28,6 +29,8 @@ export interface ParsedTrialBalanceRow {
 export interface TrialBalancePreview {
   fileName: string;
   sourceType: 'CSV' | 'XLSX';
+  formatStatus: 'STANDARD' | 'COMPATIBLE' | 'INVALID';
+  detectedHeaders: string[];
   rows: ParsedTrialBalanceRow[];
   debitTotalPaise: number;
   creditTotalPaise: number;
@@ -168,7 +171,11 @@ export async function parseTrialBalanceFile(file: File): Promise<TrialBalancePre
   const rawRows = await rowsFromFile(file);
   if (rawRows.length < 2) throw new Error('The file must contain a header row and at least one ledger row.');
   if (rawRows.length > 50_001) throw new Error('The file exceeds the 50,000-row import limit.');
-  const headers = (rawRows[0] ?? []).map(normaliseHeader);
+  const headerRow = rawRows[0] ?? [];
+  const detectedHeaders = headerRow
+    .map((value) => String(value ?? '').trim())
+    .filter((value) => value !== '');
+  const headers = headerRow.map(normaliseHeader);
   const columns = {
     code: findColumn(headers, 'code'),
     name: findColumn(headers, 'name'),
@@ -185,13 +192,26 @@ export async function parseTrialBalanceFile(file: File): Promise<TrialBalancePre
   };
   const errors: string[] = [];
   const warnings: string[] = [];
-  if (columns.code === undefined) errors.push('Required ledger-code column was not recognised.');
-  if (columns.name === undefined) errors.push('Required ledger-name column was not recognised.');
   const hasClosing = columns.closingDebit !== undefined || columns.closingCredit !== undefined;
   const hasMovement = columns.debit !== undefined || columns.credit !== undefined;
-  if (!hasClosing && !hasMovement) errors.push('No closing debit/credit or movement debit/credit columns were recognised.');
+  const missingRequiredHeaders: string[] = [];
+  if (columns.code === undefined) missingRequiredHeaders.push('Ledger Code');
+  if (columns.name === undefined) missingRequiredHeaders.push('Ledger Name');
+  if (!hasClosing && !hasMovement) missingRequiredHeaders.push('Closing Debit and Closing Credit');
+  const isStandardFormat = trialBalanceTemplateHeaders.every((header, index) => String(headerRow[index] ?? '').trim() === header)
+    && detectedHeaders.length === trialBalanceTemplateHeaders.length;
+  const formatStatus: TrialBalancePreview['formatStatus'] = missingRequiredHeaders.length > 0
+    ? 'INVALID'
+    : isStandardFormat ? 'STANDARD' : 'COMPATIBLE';
+  if (missingRequiredHeaders.length > 0) {
+    errors.push(`This file is not in the White Horse Standard TB format (${trialBalanceTemplateVersion}). Download the template and keep its row-1 headers unchanged.`);
+    errors.push(`Missing required row-1 columns: ${missingRequiredHeaders.join(', ')}.`);
+    errors.push(`Detected row-1 headers: ${detectedHeaders.slice(0, 20).join(', ') || 'none'}.`);
+  } else if (!isStandardFormat) {
+    warnings.push(`Compatible non-standard headers were recognised. Use the ${trialBalanceTemplateVersion} template for repeatable future imports.`);
+  }
   if (errors.length) {
-    return { fileName: file.name, sourceType: file.name.toLowerCase().endsWith('.csv') ? 'CSV' : 'XLSX', rows: [], debitTotalPaise: 0, creditTotalPaise: 0, differencePaise: 0, errors, warnings, contentHash: await sha256(new Uint8Array(await file.arrayBuffer())) };
+    return { fileName: file.name, sourceType: file.name.toLowerCase().endsWith('.csv') ? 'CSV' : 'XLSX', formatStatus, detectedHeaders, rows: [], debitTotalPaise: 0, creditTotalPaise: 0, differencePaise: 0, errors, warnings, contentHash: await sha256(new Uint8Array(await file.arrayBuffer())) };
   }
 
   const parsedRows: ParsedTrialBalanceRow[] = [];
@@ -263,6 +283,8 @@ export async function parseTrialBalanceFile(file: File): Promise<TrialBalancePre
   return {
     fileName: file.name,
     sourceType: file.name.toLowerCase().endsWith('.csv') ? 'CSV' : 'XLSX',
+    formatStatus,
+    detectedHeaders,
     rows: parsedRows,
     debitTotalPaise,
     creditTotalPaise,

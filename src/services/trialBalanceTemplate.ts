@@ -1,10 +1,10 @@
-import type { Cell, CellObject, SheetData, Value } from 'write-excel-file/browser';
-
 export interface TrialBalanceTemplateColumn {
   name: string;
   requirement: 'Required' | 'Recommended';
   rule: string;
 }
+
+export const trialBalanceTemplateVersion = 'WH-TB-1.0';
 
 export const trialBalanceTemplateColumns: TrialBalanceTemplateColumn[] = [
   { name: 'Ledger Code', requirement: 'Required', rule: 'Unique text/code for every ledger; duplicates are rejected.' },
@@ -17,18 +17,14 @@ export const trialBalanceTemplateColumns: TrialBalanceTemplateColumn[] = [
   { name: 'Previous Credit', requirement: 'Recommended', rule: 'Prior-year closing credit in INR for comparative statements.' }
 ];
 
-const headers = trialBalanceTemplateColumns.map((column) => column.name);
-const examples: Array<Array<string | number>> = [
-  ['EXAMPLE-DR', 'Example bank balance — replace this row', 'Assets', 'Cash and bank', 100000, 0, 75000, 0],
-  ['EXAMPLE-CR', 'Example equity balance — replace this row', 'Equity', 'Share capital', 0, 100000, 0, 75000]
-];
+export const trialBalanceTemplateHeaders = trialBalanceTemplateColumns.map((column) => column.name);
 
 function quote(value: string | number): string {
   return `"${String(value).replaceAll('"', '""')}"`;
 }
 
 export function buildTrialBalanceTemplateCsv(): string {
-  return `\uFEFF${[headers, ...examples].map((row) => row.map(quote).join(',')).join('\r\n')}\r\n`;
+  return `\uFEFF${trialBalanceTemplateHeaders.map(quote).join(',')}\r\n`;
 }
 
 function download(blob: Blob, fileName: string): void {
@@ -43,24 +39,11 @@ function download(blob: Blob, fileName: string): void {
 }
 
 export function downloadTrialBalanceTemplateCsv(): void {
-  download(new Blob([buildTrialBalanceTemplateCsv()], { type: 'text/csv;charset=utf-8' }), 'White_Horse_Trial_Balance_Template.csv');
+  download(new Blob([buildTrialBalanceTemplateCsv()], { type: 'text/csv;charset=utf-8' }), 'White_Horse_Standard_TB_Import.csv');
 }
 
 export async function downloadTrialBalanceTemplateXlsx(): Promise<void> {
-  const { default: writeXlsxFile } = await import('write-excel-file/browser');
-  const headerStyle: Partial<CellObject> = { fontWeight: 'bold', backgroundColor: '#DCE8E3', textColor: '#163E3B' };
-  const cell = (value: Value, style: Partial<CellObject> = {}): Cell => ({ value, ...style });
-  const data: SheetData = [
-    headers.map((value) => cell(value, headerStyle)),
-    ...examples.map((row) => row.map((value) => cell(value))),
-    [cell('Replace both example rows with the complete company Trial Balance. Amounts must be positive INR values; total closing debits must equal total closing credits.', { fontWeight: 'bold', textColor: '#A53B36' })]
-  ];
-  await writeXlsxFile([
-    {
-      sheet: 'Trial Balance',
-      data,
-      columns: [{ width: 18 }, { width: 44 }, { width: 20 }, { width: 24 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }],
-      stickyRowsCount: 1
-    }
-  ]).toFile('White_Horse_Trial_Balance_Template.xlsx');
+  const response = await fetch(`${import.meta.env.BASE_URL}templates/White_Horse_Standard_TB_Import.xlsx`);
+  if (!response.ok) throw new Error('The Standard TB XLSX template could not be loaded. Try the CSV template or refresh the application.');
+  download(await response.blob(), 'White_Horse_Standard_TB_Import.xlsx');
 }
