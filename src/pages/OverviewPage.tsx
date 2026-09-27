@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { formatMoney, variancePercent } from '../domain/money';
 import type { FinancialStatements, KpiSet, ValidationResult, WorkspaceData } from '../domain/types';
 import { ragStatus } from '../domain/validation';
+import { exportFinancialWorkbook } from '../services/excelExport';
 import { Icon } from '../components/Icon';
 import { MetricCard, PageHeader, ProgressBar, StatusBadge, TrendBars } from '../components/ui';
 
@@ -9,14 +11,19 @@ export function OverviewPage({
   statements,
   kpis,
   validations,
-  navigate
+  navigate,
+  notify,
+  preparerName
 }: {
   workspace: WorkspaceData;
   statements: FinancialStatements;
   kpis: KpiSet;
   validations: ValidationResult[];
   navigate: (page: string) => void;
+  notify: (message: string, tone?: 'success' | 'error') => void;
+  preparerName: string;
 }) {
+  const [exporting, setExporting] = useState(false);
   const rag = ragStatus(validations);
   const openWarnings = validations.filter((result) => result.status === 'OPEN' && result.severity === 'WARNING').length;
   const openErrors = validations.filter(
@@ -28,23 +35,40 @@ export function OverviewPage({
     ? (workspace.notes.filter((note) => note.status === 'COMPLETE').length / workspace.notes.length) * 100
     : 0;
   const workflow = [
-    { label: 'Trial Balance', detail: `${workspace.ledgers.length} ledgers · balanced`, status: 'complete' },
+    { label: 'Trial Balance', detail: workspace.ledgers.length ? `${workspace.ledgers.length} ledgers · balanced` : 'Awaiting import', status: workspace.ledgers.length ? 'complete' : 'blocked' },
     { label: 'Mapping', detail: `${mapped}/${workspace.ledgers.length} mapped`, status: mappingPercent === 100 ? 'complete' : 'active' },
     { label: 'Adjustments', detail: `${workspace.adjustments.filter((item) => item.status === 'POSTED').length} posted · ${workspace.adjustments.filter((item) => item.status === 'SUBMITTED').length} pending`, status: 'active' },
     { label: 'Disclosures', detail: `${Math.round(notePercent)}% complete`, status: notePercent === 100 ? 'complete' : 'active' },
     { label: 'Final review', detail: openErrors ? `${openErrors} blocking/error` : `${openWarnings} open warning`, status: openErrors ? 'blocked' : 'pending' }
   ];
+  const workflowScore = Math.round((
+    (workspace.ledgers.length ? 100 : 0) +
+    mappingPercent +
+    (workspace.adjustments.some((item) => item.status === 'SUBMITTED') ? 50 : 100) +
+    notePercent +
+    (openErrors ? 0 : openWarnings ? 70 : 100)
+  ) / 5);
+
+  async function generateCompleteFinancials() {
+    setExporting(true);
+    try {
+      await exportFinancialWorkbook(workspace, statements, kpis, validations);
+      notify('Complete financial-statement pack generated: statements, notes, ratios, TB, mapping, adjustments, validations and audit trail.', 'success');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Unable to generate the complete financial pack.', 'error');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="page overview-page">
       <PageHeader
         eyebrow="Financial close workspace"
-        title={`Good morning, Aarav`}
+        title={`Good morning, ${preparerName}`}
         description={`Here is the preparation status for ${workspace.company.tradeName} · ${workspace.period.label}.`}
         actions={
-          <button className="button button-primary" onClick={() => navigate('review')}>
-            Continue review <Icon name="arrow-right" size={16} />
-          </button>
+          <><button className="button button-secondary" onClick={() => navigate('review')}>Continue review <Icon name="arrow-right" size={16}/></button><button className="button button-primary" disabled={exporting} onClick={() => void generateCompleteFinancials()}><Icon name="download" size={16}/>{exporting ? 'Generating…' : 'Generate complete financials'}</button></>
         }
       />
 
@@ -66,27 +90,27 @@ export function OverviewPage({
         <div className="readiness-stats">
           <div><span>BS difference</span><strong>{formatMoney(statements.totals.balanceSheetDifference, 'RUPEES')}</strong></div>
           <div><span>Cash-flow difference</span><strong>{formatMoney(statements.totals.cashFlowDifference, 'RUPEES')}</strong></div>
-          <div><span>Last updated</span><strong>18 Apr, 4:00 PM</strong></div>
+          <div><span>Last updated</span><strong>{new Date(workspace.period.updatedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong></div>
         </div>
       </section>
 
       <section className="metric-grid">
-        <MetricCard label="Revenue" value={kpis.revenue} comparative={kpis.comparativeRevenue} icon="reports" tone="emerald" />
-        <MetricCard label="EBITDA" value={kpis.ebitda} comparative={kpis.comparativeEbitda} icon="ratios" tone="sand" />
-        <MetricCard label="Profit after tax" value={kpis.profitAfterTax} comparative={kpis.comparativeProfitAfterTax} icon="statements" />
-        <MetricCard label="Net worth" value={kpis.netWorth} comparative={kpis.comparativeNetWorth} icon="shield" />
-        <MetricCard label="Total debt" value={kpis.totalDebt} comparative={kpis.comparativeTotalDebt} icon="company" tone="rose" />
-        <MetricCard label="Working capital" value={kpis.workingCapital} comparative={kpis.comparativeWorkingCapital} icon="trial-balance" />
+        <MetricCard label="Revenue" value={kpis.revenue} comparative={kpis.comparativeRevenue} icon="reports" tone="emerald" scale={workspace.company.displayScale}/>
+        <MetricCard label="EBITDA" value={kpis.ebitda} comparative={kpis.comparativeEbitda} icon="ratios" tone="sand" scale={workspace.company.displayScale}/>
+        <MetricCard label="Profit after tax" value={kpis.profitAfterTax} comparative={kpis.comparativeProfitAfterTax} icon="statements" scale={workspace.company.displayScale}/>
+        <MetricCard label="Net worth" value={kpis.netWorth} comparative={kpis.comparativeNetWorth} icon="shield" scale={workspace.company.displayScale}/>
+        <MetricCard label="Total debt" value={kpis.totalDebt} comparative={kpis.comparativeTotalDebt} icon="company" tone="rose" scale={workspace.company.displayScale}/>
+        <MetricCard label="Working capital" value={kpis.workingCapital} comparative={kpis.comparativeWorkingCapital} icon="trial-balance" scale={workspace.company.displayScale}/>
       </section>
 
       <section className="overview-grid">
         <article className="panel financial-performance">
           <div className="panel-heading">
             <div><span className="panel-kicker">Year-on-year</span><h2>Financial performance</h2></div>
-            <StatusBadge tone="neutral">₹ in lakhs</StatusBadge>
+            <StatusBadge tone="neutral">₹ in {workspace.company.displayScale.toLowerCase()}</StatusBadge>
           </div>
           <div className="performance-content">
-            <TrendBars current={kpis.revenue} comparative={kpis.comparativeRevenue} labels={['FY 24–25', 'FY 25–26']} />
+            <TrendBars current={kpis.revenue} comparative={kpis.comparativeRevenue} labels={[workspace.period.comparativeLabel, workspace.period.label]} scale={workspace.company.displayScale}/>
             <div className="performance-list">
               {[
                 ['Revenue', kpis.revenue, kpis.comparativeRevenue],
@@ -98,7 +122,7 @@ export function OverviewPage({
                 return (
                   <div className="performance-row" key={label as string}>
                     <span>{label}</span>
-                    <strong>{formatMoney(current as number, 'LAKHS')}</strong>
+                    <strong>{formatMoney(current as number, workspace.company.displayScale)}</strong>
                     <em className={variance >= 0 ? 'positive' : 'negative'}>{variance >= 0 ? '+' : ''}{variance.toFixed(1)}%</em>
                   </div>
                 );
@@ -110,9 +134,9 @@ export function OverviewPage({
         <article className="panel workflow-panel">
           <div className="panel-heading">
             <div><span className="panel-kicker">Close progress</span><h2>Preparation workflow</h2></div>
-            <strong className="workflow-score">82%</strong>
+            <strong className="workflow-score">{workflowScore}%</strong>
           </div>
-          <ProgressBar value={82} />
+          <ProgressBar value={workflowScore} />
           <ol className="workflow-list">
             {workflow.map((item, index) => (
               <li key={item.label} className={`workflow-${item.status}`}>

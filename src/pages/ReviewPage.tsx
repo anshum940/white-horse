@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { resolveValidation } from '../db';
+import { recordValidationRun, resolveValidation } from '../db';
 import { formatMoney } from '../domain/money';
 import type { FinancialStatements, Severity, ValidationResult, WorkspaceData } from '../domain/types';
 import { ragStatus, severityRank } from '../domain/validation';
@@ -40,10 +40,22 @@ export function ReviewPage({
     }
     setBusy(result.id);
     try {
-      await resolveValidation(result.id, 'Reviewed against supporting workpaper and marked resolved in the demo workspace.');
+      await resolveValidation(result.id, 'Reviewed against supporting workpaper and marked resolved in the local workspace.');
       notify('Validation result resolved with reviewer audit trail.', 'success');
     } catch (error) {
       notify(error instanceof Error ? error.message : 'Unable to resolve result.', 'error');
+    } finally {
+      setBusy(undefined);
+    }
+  }
+
+  async function runValidations() {
+    setBusy('suite');
+    try {
+      await recordValidationRun(workspace.company.id, workspace.period.id, validations.length);
+      notify(`Validation suite completed: ${validations.length} result${validations.length === 1 ? '' : 's'} generated from the current workspace.`, 'success');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Unable to record the validation run.', 'error');
     } finally {
       setBusy(undefined);
     }
@@ -58,7 +70,7 @@ export function ReviewPage({
 
   return (
     <div className="page">
-      <PageHeader eyebrow="Automated controls + professional review" title="Review & validation" description={`Ruleset ${workspace.period.rulesetVersion} · latest run reflects the current TB, mapping and posted adjustments.`} actions={<button className="button button-primary"><Icon name="review" size={16}/> Run all validations</button>}/>
+      <PageHeader eyebrow="Automated controls + professional review" title="Review & validation" description={`Ruleset ${workspace.period.rulesetVersion} · latest run reflects the current TB, mapping and posted adjustments.`} actions={<button className="button button-primary" disabled={busy === 'suite'} onClick={() => void runValidations()}><Icon name="review" size={16}/> {busy === 'suite' ? 'Running…' : 'Run all validations'}</button>}/>
 
       <section className="review-hero">
         <div className={`rag-card rag-card-${rag.toLowerCase()}`}>

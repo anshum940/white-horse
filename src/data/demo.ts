@@ -1,4 +1,5 @@
 import { RULESET_VERSION, TAXONOMY_VERSION, taxonomyByCode } from './taxonomy';
+import { createDivisionINoteTemplates } from './noteTemplates';
 import type {
   Adjustment,
   AdjustmentLine,
@@ -228,22 +229,31 @@ export const demoAdjustmentLines: AdjustmentLine[] = [
   { id: 'adj-line-003-2', adjustmentId: 'adjustment-accrual', ledgerId: 'ledger-220300', lineNumber: 2, debitPaise: 0, creditPaise: rupees(80_000), description: 'Accrued utilities liability' }
 ];
 
-export const demoNotes: NoteDisclosure[] = [
-  { id: 'note-1', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '1', title: 'Corporate information', taxonomyCodes: [], status: 'COMPLETE', owner: 'A. Mehta', narrative: 'Saffron Industries Private Limited manufactures precision industrial components. This company and all figures are synthetic.', updatedAt: DEMO_DATE },
-  { id: 'note-2', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '2', title: 'Significant accounting policies', taxonomyCodes: [], status: 'IN_REVIEW', owner: 'R. Sharma', narrative: 'Basis of preparation, estimates, revenue, PPE, inventory, employee benefits, taxes and provisions.', updatedAt: DEMO_DATE },
-  { id: 'note-3', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '3', title: 'Property, plant and equipment', taxonomyCodes: ['BS-NCA-PPE'], status: 'COMPLETE', owner: 'A. Mehta', narrative: 'Reconciled to the synthetic fixed-asset register.', updatedAt: DEMO_DATE },
-  { id: 'note-7', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '7', title: 'Inventories', taxonomyCodes: ['BS-CA-INVENTORY'], status: 'COMPLETE', owner: 'A. Mehta', narrative: 'Includes provision for slow-moving inventory.', updatedAt: DEMO_DATE },
-  { id: 'note-8', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '8', title: 'Trade receivables', taxonomyCodes: ['BS-CA-RECEIVABLE'], status: 'IN_REVIEW', owner: 'R. Sharma', narrative: 'Ageing and credit-risk analysis prepared for review.', updatedAt: DEMO_DATE },
-  { id: 'note-12', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '12', title: 'Equity share capital', taxonomyCodes: ['BS-EQ-CAPITAL'], status: 'COMPLETE', owner: 'A. Mehta', narrative: 'Authorised, issued and paid-up capital; synthetic promoter schedule attached.', updatedAt: DEMO_DATE },
-  { id: 'note-14', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '14', title: 'Long-term borrowings', taxonomyCodes: ['BS-NCL-BORROWING'], status: 'COMPLETE', owner: 'R. Sharma', narrative: 'Security, terms and repayment schedule are synthetic.', updatedAt: DEMO_DATE },
-  { id: 'note-17', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '17', title: 'Trade payables', taxonomyCodes: ['BS-CL-PAYABLE'], status: 'PENDING', owner: 'A. Mehta', narrative: 'MSME ageing disclosure awaiting final review.', updatedAt: DEMO_DATE },
-  { id: 'note-21', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '21', title: 'Revenue from operations', taxonomyCodes: ['PL-REV-OPERATIONS'], status: 'COMPLETE', owner: 'A. Mehta', narrative: 'Revenue by product group and geography.', updatedAt: DEMO_DATE },
-  { id: 'note-29', companyId: demoCompany.id, periodId: demoPeriod.id, noteNumber: '29', title: 'Analytical ratios', taxonomyCodes: [], status: 'IN_REVIEW', owner: 'R. Sharma', narrative: 'Variances above the configured threshold require explanation.', updatedAt: DEMO_DATE }
-];
+const demoNoteOverrides: Record<string, Partial<NoteDisclosure>> = {
+  '1': { status: 'COMPLETE', narrative: 'Saffron Industries Private Limited manufactures precision industrial components. This company, every person name and all figures are synthetic.', owner: 'Abhijit' },
+  '2': { status: 'IN_REVIEW', narrative: 'Basis of preparation, estimates, revenue, PPE, inventory, employee benefits, taxes and provisions.', owner: 'Riya Sharma' },
+  '3': { status: 'COMPLETE', narrative: 'Reconciled to the synthetic fixed-asset register.', owner: 'Abhijit' },
+  '7': { status: 'COMPLETE', narrative: 'Includes provision for slow-moving inventory.', owner: 'Abhijit' },
+  '8': { status: 'IN_REVIEW', narrative: 'Ageing and credit-risk analysis prepared for review.', owner: 'Riya Sharma' },
+  '12': { status: 'COMPLETE', narrative: 'Authorised, issued and paid-up capital; synthetic promoter schedule attached.', owner: 'Abhijit' },
+  '14': { status: 'COMPLETE', narrative: 'Security, terms and repayment schedule are synthetic.', owner: 'Riya Sharma' },
+  '17': { status: 'PENDING', narrative: 'MSME ageing disclosure awaiting final review.', owner: 'Abhijit' },
+  '21': { status: 'COMPLETE', narrative: 'Revenue by product group and geography.', owner: 'Abhijit' },
+  '29': { status: 'IN_REVIEW', narrative: 'Variances above the configured threshold require explanation.', owner: 'Riya Sharma' }
+};
+
+export const demoNotes: NoteDisclosure[] = createDivisionINoteTemplates({
+  companyId: demoCompany.id,
+  periodId: demoPeriod.id,
+  companyName: demoCompany.legalName,
+  owner: 'Abhijit',
+  now: DEMO_DATE,
+  demo: true
+}).map((note) => ({ ...note, ...demoNoteOverrides[note.noteNumber] }));
 
 export const demoUsers: LocalUser[] = [
   { id: 'demo-admin', username: 'admin', displayName: 'Local Administrator', role: 'ADMIN', active: true, createdAt: DEMO_DATE },
-  { id: 'demo-preparer', username: 'amehta', displayName: 'Aarav Mehta', role: 'PREPARER', active: true, createdAt: DEMO_DATE },
+  { id: 'demo-preparer', username: 'abhijit', displayName: 'Abhijit', role: 'PREPARER', active: true, createdAt: DEMO_DATE },
   { id: 'demo-reviewer', username: 'rsharma', displayName: 'Riya Sharma', role: 'REVIEWER', active: true, createdAt: DEMO_DATE }
 ];
 
@@ -259,7 +269,7 @@ export const demoValidations: ValidationResult[] = [
     evidence: 'Note 17 is marked Pending.',
     suggestedAction: 'Complete the MSME and ageing schedule, then obtain reviewer sign-off.',
     entityType: 'NOTE',
-    entityId: 'note-17',
+    entityId: `${demoPeriod.id}-note-17`,
     status: 'OPEN',
     generatedAt: DEMO_DATE
   },

@@ -48,6 +48,20 @@ function finding(
 
 export function validateWorkspace(context: ValidationContext): ValidationResult[] {
   const results: ValidationResult[] = [];
+  if (context.ledgers.length === 0) {
+    results.push(
+      finding(
+        context,
+        'TB-000',
+        'BLOCKING',
+        'Trial Balance has not been imported',
+        'The active company workspace does not yet contain ledger balances.',
+        'Active Trial Balance row count: 0.',
+        'Download the prescribed template, populate a balanced Trial Balance and activate the import.',
+        { entityType: 'TB_IMPORT', entityId: context.period.activeImportId }
+      )
+    );
+  }
   const tbDifference = sumMoney(context.ledgers.map((ledger) => ledger.signedCurrentPaise));
   if (tbDifference !== 0) {
     results.push(

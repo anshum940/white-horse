@@ -12,7 +12,8 @@ import {
   demoUsers,
   demoValidations
 } from './data/demo';
-import { taxonomyByCode } from './data/taxonomy';
+import { createDivisionINoteTemplates } from './data/noteTemplates';
+import { RULESET_VERSION, TAXONOMY_VERSION, taxonomyByCode } from './data/taxonomy';
 import { hashRecord } from './domain/security';
 import type {
   Adjustment,
@@ -62,9 +63,55 @@ export class WhiteHorseDatabase extends Dexie {
 
 export const db = new WhiteHorseDatabase();
 
+export interface CompanyWorkspaceInput {
+  legalName: string;
+  tradeName: string;
+  cin: string;
+  registeredOffice: string;
+  industry: string;
+  displayScale: Company['displayScale'];
+  periodLabel: string;
+  startDate: string;
+  endDate: string;
+  comparativeLabel: string;
+  comparativeStartDate: string;
+  comparativeEndDate: string;
+  materialityPaise: number;
+}
+
+export interface CompanyWorkspaceSummary {
+  companyId: string;
+  legalName: string;
+  tradeName: string;
+  cin: string;
+  periodId: string;
+  periodLabel: string;
+  periodEndDate: string;
+  status: ReportingPeriod['status'];
+}
+
+async function maintainSeedData(): Promise<void> {
+  const preparer = await db.users.get('demo-preparer');
+  if (preparer && (preparer.displayName !== 'Abhijit' || preparer.username !== 'abhijit')) {
+    await db.users.update(preparer.id, { displayName: 'Abhijit', username: 'abhijit' });
+  }
+  const existingNotes = await db.notes.where('periodId').equals(demoPeriod.id).toArray();
+  const byNumber = new Map(existingNotes.map((note) => [note.noteNumber, note]));
+  const missing = demoNotes.filter((note) => !byNumber.has(note.noteNumber));
+  if (missing.length) await db.notes.bulkAdd(missing);
+  for (const note of existingNotes) {
+    if (note.owner === 'A. Mehta' || note.owner === 'Aarav Mehta') {
+      await db.notes.update(note.id, { owner: 'Abhijit' });
+    }
+  }
+}
+
 export async function initializeDatabase(): Promise<void> {
   const exists = await db.companies.get(demoCompany.id);
-  if (exists) return;
+  if (exists) {
+    await maintainSeedData();
+    return;
+  }
   await db.transaction(
     'rw',
     [
@@ -96,9 +143,32 @@ export async function initializeDatabase(): Promise<void> {
   );
 }
 
-export async function loadDemoWorkspace(): Promise<WorkspaceData | undefined> {
-  const company = await db.companies.get(demoCompany.id);
-  const period = await db.periods.get(demoPeriod.id);
+export async function listCompanyWorkspaces(): Promise<CompanyWorkspaceSummary[]> {
+  const companies = (await db.companies.toArray()).filter((company) => company.active);
+  const summaries = await Promise.all(companies.map(async (company) => {
+    const periods = await db.periods.where('companyId').equals(company.id).toArray();
+    const period = periods.sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
+    if (!period) return undefined;
+    return {
+      companyId: company.id,
+      legalName: company.legalName,
+      tradeName: company.tradeName,
+      cin: company.cin,
+      periodId: period.id,
+      periodLabel: period.label,
+      periodEndDate: period.endDate,
+      status: period.status
+    } satisfies CompanyWorkspaceSummary;
+  }));
+  return summaries.filter((summary): summary is CompanyWorkspaceSummary => Boolean(summary));
+}
+
+export async function loadWorkspace(companyId = demoCompany.id, periodId?: string): Promise<WorkspaceData | undefined> {
+  const company = await db.companies.get(companyId);
+  const periods = company ? await db.periods.where('companyId').equals(company.id).toArray() : [];
+  const period = periodId
+    ? periods.find((item) => item.id === periodId)
+    : periods.sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
   if (!company || !period) return undefined;
   const activeImport = await db.imports.get(period.activeImportId);
   if (!activeImport) return undefined;
@@ -132,6 +202,261 @@ export async function loadDemoWorkspace(): Promise<WorkspaceData | undefined> {
   };
 }
 
+export async function loadDemoWorkspace(): Promise<WorkspaceData | undefined> {
+  return loadWorkspace(demoCompany.id, demoPeriod.id);
+}
+
+function validateCompanyWorkspaceInput(input: CompanyWorkspaceInput): void {
+  const required = [
+    input.legalName,
+    input.tradeName,
+    input.cin,
+    input.registeredOffice,
+    input.industry,
+    input.periodLabel,
+    input.startDate,
+    input.endDate,
+    input.comparativeLabel,
+    input.comparativeStartDate,
+    input.comparativeEndDate
+  ];
+  if (required.some((value) => !value.trim())) throw new Error('Complete every company and reporting-period field.');
+  if (input.endDate < input.startDate) throw new Error('The reporting-period end date must not precede its start date.');
+  if (input.comparativeEndDate < input.comparativeStartDate) throw new Error('The comparative-period end date must not precede its start date.');
+  if (!Number.isSafeInteger(input.materialityPaise) || input.materialityPaise <= 0) {
+    throw new Error('Materiality must be a positive amount in paise.');
+  }
+}
+
+export async function createCompanyWorkspace(input: CompanyWorkspaceInput): Promise<string> {
+  validateCompanyWorkspaceInput(input);
+  const duplicate = await db.companies.filter((company) => company.cin.toLowerCase() === input.cin.trim().toLowerCase()).first();
+  if (duplicate) throw new Error('A company with this CIN already exists in this browser.');
+  const now = new Date().toISOString();
+  const companyId = crypto.randomUUID();
+  const periodId = crypto.randomUUID();
+  const importId = crypto.randomUUID();
+  const company: Company = {
+    id: companyId,
+    legalName: input.legalName.trim(),
+    tradeName: input.tradeName.trim(),
+    cin: input.cin.trim().toUpperCase(),
+    registeredOffice: input.registeredOffice.trim(),
+    industry: input.industry.trim(),
+    framework: 'SCHEDULE_III_DIV_I',
+    currency: 'INR',
+    displayScale: input.displayScale,
+    active: true,
+    createdAt: now,
+    updatedAt: now
+  };
+  const period: ReportingPeriod = {
+    id: periodId,
+    companyId,
+    activeImportId: importId,
+    label: input.periodLabel.trim(),
+    startDate: input.startDate,
+    endDate: input.endDate,
+    comparativeLabel: input.comparativeLabel.trim(),
+    comparativeStartDate: input.comparativeStartDate,
+    comparativeEndDate: input.comparativeEndDate,
+    status: 'DRAFT',
+    revision: 1,
+    materialityPaise: input.materialityPaise,
+    taxonomyVersion: TAXONOMY_VERSION,
+    rulesetVersion: RULESET_VERSION,
+    cashFlowInputs: {
+      incomeTaxesPaid: 0,
+      interestPaid: 0,
+      interestIncomeReceived: 0,
+      ppePurchases: 0,
+      ppeDisposalProceeds: 0,
+      intangiblePurchases: 0,
+      investmentPurchases: 0,
+      dividendsPaid: 0
+    },
+    comparativeCashFlowSummary: { operating: 0, investing: 0, financing: 0, openingCash: 0 },
+    createdAt: now,
+    updatedAt: now
+  };
+  const placeholderImport: TrialBalanceImport = {
+    id: importId,
+    companyId,
+    periodId,
+    fileName: 'Awaiting Trial Balance import',
+    sourceType: 'MANUAL',
+    importedAt: now,
+    importedBy: 'demo-preparer',
+    rowCount: 0,
+    debitTotalPaise: 0,
+    creditTotalPaise: 0,
+    differencePaise: 0,
+    status: 'ACTIVE',
+    contentHash: `empty:${importId}`
+  };
+  const notes = createDivisionINoteTemplates({
+    companyId,
+    periodId,
+    companyName: company.legalName,
+    owner: 'Abhijit',
+    now
+  });
+  const event = await nextAuditEvent({
+    companyId,
+    periodId,
+    actorId: 'demo-preparer',
+    actorRole: 'PREPARER',
+    action: 'COMPANY_WORKSPACE_CREATED',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    reason: `Created a Schedule III Division I workspace for ${company.legalName}.`
+  });
+  await db.transaction('rw', [db.companies, db.periods, db.imports, db.notes, db.auditEvents], async () => {
+    await db.companies.add(company);
+    await db.periods.add(period);
+    await db.imports.add(placeholderImport);
+    await db.notes.bulkAdd(notes);
+    await db.auditEvents.add(event);
+  });
+  return companyId;
+}
+
+export async function updateCompanyWorkspace(companyId: string, periodId: string, input: CompanyWorkspaceInput): Promise<void> {
+  validateCompanyWorkspaceInput(input);
+  const [company, period] = await Promise.all([db.companies.get(companyId), db.periods.get(periodId)]);
+  if (!company || !period || period.companyId !== company.id) throw new Error('Company workspace was not found.');
+  if (period.status === 'FINALISED') throw new Error('Reopen the reporting period before changing its setup.');
+  const duplicate = await db.companies
+    .filter((item) => item.id !== companyId && item.cin.toLowerCase() === input.cin.trim().toLowerCase())
+    .first();
+  if (duplicate) throw new Error('Another company with this CIN already exists in this browser.');
+  const now = new Date().toISOString();
+  const event = await nextAuditEvent({
+    companyId,
+    periodId,
+    actorId: 'demo-preparer',
+    actorRole: 'PREPARER',
+    action: 'COMPANY_WORKSPACE_UPDATED',
+    entityType: 'COMPANY',
+    entityId: companyId,
+    reason: 'Updated company identity, presentation scale, reporting period or materiality.'
+  });
+  await db.transaction('rw', db.companies, db.periods, db.auditEvents, async () => {
+    await db.companies.update(companyId, {
+      legalName: input.legalName.trim(),
+      tradeName: input.tradeName.trim(),
+      cin: input.cin.trim().toUpperCase(),
+      registeredOffice: input.registeredOffice.trim(),
+      industry: input.industry.trim(),
+      displayScale: input.displayScale,
+      updatedAt: now
+    });
+    await db.periods.update(periodId, {
+      label: input.periodLabel.trim(),
+      startDate: input.startDate,
+      endDate: input.endDate,
+      comparativeLabel: input.comparativeLabel.trim(),
+      comparativeStartDate: input.comparativeStartDate,
+      comparativeEndDate: input.comparativeEndDate,
+      materialityPaise: input.materialityPaise,
+      updatedAt: now
+    });
+    await db.auditEvents.add(event);
+  });
+}
+
+export async function addLocalUser(input: { displayName: string; username: string; role: LocalUser['role'] }): Promise<void> {
+  if (!input.displayName.trim() || !input.username.trim()) throw new Error('Display name and username are required.');
+  const username = input.username.trim().toLowerCase();
+  if (!/^[a-z0-9._-]{3,40}$/.test(username)) throw new Error('Username must use 3–40 letters, numbers, dots, underscores or hyphens.');
+  if (await db.users.where('username').equals(username).first()) throw new Error('This local username already exists.');
+  const user: LocalUser = {
+    id: crypto.randomUUID(),
+    username,
+    displayName: input.displayName.trim(),
+    role: input.role,
+    active: true,
+    createdAt: new Date().toISOString()
+  };
+  const event = await nextAuditEvent({
+    actorId: 'demo-admin',
+    actorRole: 'ADMIN',
+    action: 'LOCAL_USER_CREATED',
+    entityType: 'LOCAL_USER',
+    entityId: user.id,
+    reason: `Created local ${user.role.toLowerCase()} ${user.username}.`
+  });
+  await db.transaction('rw', db.users, db.auditEvents, async () => {
+    await db.users.add(user);
+    await db.auditEvents.add(event);
+  });
+}
+
+export async function updateLocalUser(userId: string, input: { displayName: string; role: LocalUser['role']; active: boolean }): Promise<void> {
+  const user = await db.users.get(userId);
+  if (!user) throw new Error('Local user was not found.');
+  if (!input.displayName.trim()) throw new Error('Display name is required.');
+  if (user.id === 'demo-admin' && !input.active) throw new Error('The built-in local administrator cannot be deactivated.');
+  const event = await nextAuditEvent({
+    actorId: 'demo-admin',
+    actorRole: 'ADMIN',
+    action: 'LOCAL_USER_UPDATED',
+    entityType: 'LOCAL_USER',
+    entityId: user.id,
+    reason: `Updated ${user.username}: role ${input.role}, active ${input.active}.`
+  });
+  await db.transaction('rw', db.users, db.auditEvents, async () => {
+    await db.users.update(user.id, { displayName: input.displayName.trim(), role: input.role, active: input.active });
+    await db.auditEvents.add(event);
+  });
+}
+
+export async function lockMappingVersion(periodId: string): Promise<void> {
+  const period = await db.periods.get(periodId);
+  if (!period) throw new Error('Reporting period was not found.');
+  if (period.status === 'FINALISED') throw new Error('The reporting period is finalised.');
+  const [ledgers, mappings] = await Promise.all([
+    db.ledgers.where('importId').equals(period.activeImportId).toArray(),
+    db.mappings.where('periodId').equals(periodId).toArray()
+  ]);
+  if (!ledgers.length) throw new Error('Import a Trial Balance before locking mappings.');
+  const mappingByLedger = new Map(mappings.map((mapping) => [mapping.ledgerId, mapping]));
+  if (ledgers.some((ledger) => !mappingByLedger.get(ledger.id)?.taxonomyCode)) {
+    throw new Error('Every active ledger must be mapped before the version can be locked.');
+  }
+  const now = new Date().toISOString();
+  const updated = mappings.map((mapping) => ({ ...mapping, status: 'LOCKED' as const, reviewedBy: 'demo-reviewer', reviewedAt: now, updatedAt: now }));
+  const event = await nextAuditEvent({
+    companyId: period.companyId,
+    periodId,
+    actorId: 'demo-reviewer',
+    actorRole: 'REVIEWER',
+    action: 'MAPPING_VERSION_LOCKED',
+    entityType: 'MAPPING_VERSION',
+    entityId: `${periodId}-mapping-r${period.revision}`,
+    reason: `Reviewed and locked ${updated.length} active ledger mappings.`
+  });
+  await db.transaction('rw', db.mappings, db.periods, db.auditEvents, async () => {
+    await db.mappings.bulkPut(updated);
+    await db.periods.update(periodId, { status: 'READY_FOR_REVIEW', updatedAt: now });
+    await db.auditEvents.add(event);
+  });
+}
+
+export async function recordValidationRun(companyId: string, periodId: string, resultCount: number): Promise<void> {
+  const event = await nextAuditEvent({
+    companyId,
+    periodId,
+    actorId: 'demo-preparer',
+    actorRole: 'PREPARER',
+    action: 'VALIDATION_SUITE_RUN',
+    entityType: 'REPORTING_PERIOD',
+    entityId: periodId,
+    reason: `Executed the active ruleset and produced ${resultCount} result${resultCount === 1 ? '' : 's'}.`
+  });
+  await db.auditEvents.add(event);
+}
+
 export async function nextAuditEvent(
   input: Omit<AuditEvent, 'id' | 'sequence' | 'timestamp' | 'previousEventHash' | 'eventHash'>
 ): Promise<AuditEvent> {
@@ -157,7 +482,7 @@ export async function updateMapping(ledgerId: string, taxonomyCode: string): Pro
     action: 'MAPPING_UPDATED',
     entityType: 'MAPPING',
     entityId: mapping?.id ?? ledger.id,
-    reason: `Changed mapping from ${mapping?.taxonomyCode ?? 'unmapped'} to ${taxonomyCode} in demo workspace.`
+    reason: `Changed mapping from ${mapping?.taxonomyCode ?? 'unmapped'} to ${taxonomyCode}.`
   });
   await db.transaction('rw', db.mappings, db.auditEvents, async () => {
     const values = {
@@ -227,14 +552,14 @@ export async function reviewAdjustment(adjustmentId: string, approve: boolean): 
     action: approve ? 'ADJUSTMENT_POSTED' : 'ADJUSTMENT_REJECTED',
     entityType: 'ADJUSTMENT',
     entityId: adjustment.id,
-    reason: approve ? 'Reviewed and posted in the interactive demo.' : 'Rejected in the interactive demo.'
+    reason: approve ? 'Reviewed and posted by the active local reviewer.' : 'Rejected by the active local reviewer.'
   });
   await db.transaction('rw', db.adjustments, db.auditEvents, async () => {
     await db.adjustments.update(adjustment.id, {
       status,
       reviewedBy: 'demo-reviewer',
       reviewedAt: now,
-      reviewComment: approve ? 'Reviewed and approved in demo mode.' : 'Rejected in demo mode.',
+      reviewComment: approve ? 'Reviewed and approved in the local workspace.' : 'Rejected in the local workspace.',
       postedAt: approve ? now : undefined
     });
     await db.auditEvents.add(event);

@@ -1,20 +1,17 @@
 # White Horse Report Catalogue and Formats
 
-## 1. Common report controls
+## 1. Current implemented report controls
 
-Every formal output contains:
+The one-click XLSX cover records:
 
-- Company legal name and CIN where configured.
-- Standalone/consolidated indicator (standalone in the initial release).
-- Report title, reporting date/period, comparative period, currency, and display scale.
+- Company legal name, trade name, CIN, registered office, and industry.
+- Standalone Schedule III Division I framework scope.
+- Reporting period and comparative period.
 - Framework/taxonomy/ruleset versions.
-- Draft/final status and report-run ID.
-- Generated timestamp and user.
-- Preparer/reviewer/finaliser details where applicable.
-- Page numbering, confidentiality label, and a footer stating that professional review remains required.
-- Dataset and output hash in the export manifest, not visually cluttering the face statements.
+- Draft/review/final period status and generated timestamp.
+- A professional-use warning requiring completion of applicable accounting-standard, Companies Act, Schedule III, sector-specific, and entity-specific disclosures.
 
-All statement and note figures support drill-down in the application. Printed exports contain note cross-references and supporting schedules.
+Face-statement values support ledger/adjustment drill-down in the application. The workbook retains exact INR values while the application can display rupees, thousands, lakhs, or crores.
 
 ## 2. Statutory-oriented financial statements
 
@@ -60,7 +57,7 @@ Component-wise opening balance, prior-period correction/restatement, owner trans
 - Tax, deferred tax, related parties, commitments/contingencies, MSME, ageing, ratios, and other configured disclosures.
 - Disclosure checklist showing Complete / Not applicable / Pending, owner, evidence, and review status.
 
-The initial release provides structured placeholders and mapped totals; specialised disclosure content requires preparer input and reviewer approval.
+The current release provides 30 structured note workpapers, mapped current/comparative totals, status, owner, narrative, and review checklists. Specialised disclosure content requires preparer input and reviewer approval.
 
 ## 4. Control and reconciliation reports
 
@@ -100,7 +97,35 @@ The initial release provides structured placeholders and mapped totals; speciali
 - Covenant/user-defined ratio schedule and explanations.
 - Supporting TB/mapping/adjustment reconciliation manifest.
 
-## 6. Export formats
+## 6. One-click Excel pack
+
+**Generate complete financials** creates these worksheets in order:
+
+1. Cover
+2. Balance Sheet
+3. Profit and Loss
+4. Cash Flow
+5. Notes to Accounts
+6. Ratios
+7. Trial Balance
+8. Mapping
+9. Adjustments
+10. Validation
+11. Audit Trail
+
+Generation is blocked if no Trial Balance is active or any active ledger is unmapped. The ratio sheet contains 12 transparent calculations. DSCR remains `N/A` until principal-repayment data is available.
+
+## 7. Trial Balance import/export format
+
+The prescribed import columns are:
+
+```text
+Ledger Code, Ledger Name, Group, Subgroup, Closing Debit, Closing Credit, Previous Debit, Previous Credit
+```
+
+Values are positive INR amounts. One closing side is populated per ledger, and total closing debits must equal total closing credits. See `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` for the complete schema and supported aliases.
+
+## 8. Export formats
 
 | Format | Use | Implementation rule |
 | --- | --- | --- |
@@ -110,7 +135,7 @@ The initial release provides structured placeholders and mapped totals; speciali
 | JSON backup | Full-fidelity backup/restore | Versioned manifest, integrity hash, optional authenticated encryption |
 | HTML in-app | Drill-down and review | Accessible tables, provenance links, no raw imported HTML |
 
-## 7. Naming convention
+## 9. Naming convention
 
 ```text
 WhiteHorse_<CompanyCode>_<PeriodEnd>_<ReportType>_<Status>_v<Revision>_<YYYYMMDD-HHmm>.<ext>

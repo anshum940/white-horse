@@ -40,7 +40,7 @@ export function StatementsPage({
     setExporting(true);
     try {
       await exportFinancialWorkbook(workspace, statements, kpis, validations);
-      notify('Financial statement workbook generated locally.', 'success');
+      notify('Complete financial-statement workbook generated locally.', 'success');
     } catch (error) {
       notify(error instanceof Error ? error.message : 'Unable to generate workbook.', 'error');
     } finally {
@@ -54,11 +54,11 @@ export function StatementsPage({
         eyebrow="Adjusted TB → financial statements"
         title="Financial statements"
         description="Schedule III Division I-oriented presentation with comparatives, note references and full ledger drill-down."
-        actions={<><button className="button button-secondary" onClick={() => window.print()}><Icon name="print" size={16}/> Print / PDF</button><button className="button button-primary" disabled={exporting} onClick={() => void exportWorkbook()}><Icon name="download" size={16}/> {exporting ? 'Generating…' : 'Export workbook'}</button></>}
+        actions={<><button className="button button-secondary" onClick={() => window.print()}><Icon name="print" size={16}/> Print / PDF</button><button className="button button-primary" disabled={exporting} onClick={() => void exportWorkbook()}><Icon name="download" size={16}/> {exporting ? 'Generating…' : 'Generate complete financials'}</button></>}
       />
       <section className="statement-control-bar">
         <div className="statement-tabs">{tabs.map((item) => <button key={item.key} onClick={() => setTab(item.key)} className={tab === item.key ? 'active' : ''}>{item.label}</button>)}</div>
-        <div className="statement-controls"><StatusBadge tone="amber">DRAFT FOR REVIEW</StatusBadge><span>₹ in lakhs</span><button className="icon-button"><Icon name="more"/></button></div>
+        <div className="statement-controls"><StatusBadge tone={workspace.period.status === 'FINALISED' ? 'green' : 'amber'}>{workspace.period.status === 'FINALISED' ? 'FINALISED' : 'DRAFT FOR REVIEW'}</StatusBadge><span>₹ in {workspace.company.displayScale.toLowerCase()}</span></div>
       </section>
       <section className="paper-sheet">
         <header className="report-header">
@@ -74,22 +74,23 @@ export function StatementsPage({
           lines={statements[tab]}
           currentLabel={workspace.period.label}
           comparativeLabel={workspace.period.comparativeLabel}
+          scale={workspace.company.displayScale}
           onDrilldown={setDrilldown}
         />
         <footer className="report-footer-note">
           <p>See accompanying notes forming part of these financial statements.</p>
-          <p>Prepared using taxonomy {workspace.period.taxonomyVersion}. Synthetic demonstration data — not for statutory filing.</p>
+          <p>Prepared using taxonomy {workspace.period.taxonomyVersion}. {workspace.company.id === 'demo-company' ? 'Synthetic demonstration data — not for statutory filing.' : 'Subject to preparer/reviewer completion of all applicable disclosures.'}</p>
         </footer>
       </section>
 
       {drilldown && (
         <Modal title={drilldown.label} description="Trace from the presented figure to individual ledgers and posted adjustments." onClose={() => setDrilldown(undefined)} footer={<button className="button button-primary" onClick={() => setDrilldown(undefined)}>Done</button>}>
-          <div className="drilldown-summary"><div><span>Presented amount</span><strong>{formatMoney(drilldown.currentPaise, 'LAKHS')}</strong></div><div><span>Comparative</span><strong>{formatMoney(drilldown.comparativePaise, 'LAKHS')}</strong></div><div><span>Source ledgers</span><strong>{drilldown.ledgerIds.length}</strong></div></div>
+          <div className="drilldown-summary"><div><span>Presented amount</span><strong>{formatMoney(drilldown.currentPaise, workspace.company.displayScale)}</strong></div><div><span>Comparative</span><strong>{formatMoney(drilldown.comparativePaise, workspace.company.displayScale)}</strong></div><div><span>Source ledgers</span><strong>{drilldown.ledgerIds.length}</strong></div></div>
           <div className="table-scroll"><table className="data-table"><thead><tr><th>Ledger</th><th className="amount-column">Imported TB</th><th className="amount-column">Posted adjustment</th><th className="amount-column">Adjusted signed</th></tr></thead><tbody>{drilldown.ledgerIds.map((ledgerId) => {
             const ledger = workspace.ledgers.find((item) => item.id === ledgerId);
             if (!ledger) return null;
             const adjustment = adjustmentByLedger.get(ledgerId) ?? 0;
-            return <tr key={ledgerId}><td><div className="ledger-cell"><span className="ledger-code">{ledger.code}</span><strong>{ledger.name}</strong></div></td><td className="amount-column">{formatMoney(ledger.signedCurrentPaise, 'LAKHS')}</td><td className="amount-column">{formatMoney(adjustment, 'LAKHS', { showZero: false })}</td><td className="amount-column"><strong>{formatMoney(ledger.signedCurrentPaise + adjustment, 'LAKHS')}</strong></td></tr>;
+            return <tr key={ledgerId}><td><div className="ledger-cell"><span className="ledger-code">{ledger.code}</span><strong>{ledger.name}</strong></div></td><td className="amount-column">{formatMoney(ledger.signedCurrentPaise, workspace.company.displayScale)}</td><td className="amount-column">{formatMoney(adjustment, workspace.company.displayScale, { showZero: false })}</td><td className="amount-column"><strong>{formatMoney(ledger.signedCurrentPaise + adjustment, workspace.company.displayScale)}</strong></td></tr>;
           })}</tbody></table></div>
         </Modal>
       )}

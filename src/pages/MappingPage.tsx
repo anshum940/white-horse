@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { taxonomyByCode, taxonomyOptions } from '../data/taxonomy';
-import { updateMapping } from '../db';
+import { lockMappingVersion, updateMapping } from '../db';
 import { formatMoney } from '../domain/money';
 import type { WorkspaceData } from '../domain/types';
 import { Icon } from '../components/Icon';
@@ -10,6 +10,7 @@ export function MappingPage({ workspace, notify }: { workspace: WorkspaceData; n
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'UNMAPPED' | 'DRAFT' | 'LOCKED'>('ALL');
   const [busyId, setBusyId] = useState<string>();
+  const [locking, setLocking] = useState(false);
   const mappingByLedger = useMemo(() => new Map(workspace.mappings.map((mapping) => [mapping.ledgerId, mapping])), [workspace.mappings]);
   const rows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -36,13 +37,25 @@ export function MappingPage({ workspace, notify }: { workspace: WorkspaceData; n
     }
   }
 
+  async function lockVersion() {
+    setLocking(true);
+    try {
+      await lockMappingVersion(workspace.period.id);
+      notify('All active ledger mappings were reviewed and locked with an audit event.', 'success');
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Unable to lock the mapping version.', 'error');
+    } finally {
+      setLocking(false);
+    }
+  }
+
   return (
     <div className="page">
       <PageHeader
         eyebrow="Classification engine"
         title="Mapping & classification"
         description="Map every ledger to a controlled statement head, note and cash-flow class. Suggestions never approve themselves."
-        actions={<button className="button button-primary" disabled={completion < 100}><Icon name="lock" size={16}/> Submit mapping version</button>}
+        actions={<button className="button button-primary" disabled={completion < 100 || locking || workspace.ledgers.length === 0} onClick={() => void lockVersion()}><Icon name="lock" size={16}/> {locking ? 'Locking…' : 'Review & lock mapping version'}</button>}
       />
 
       <section className="mapping-summary">
@@ -68,7 +81,7 @@ export function MappingPage({ workspace, notify }: { workspace: WorkspaceData; n
                 const node = mapping ? taxonomyByCode.get(mapping.taxonomyCode) : undefined;
                 return (
                   <tr key={ledger.id} className={!mapping ? 'row-warning' : ''}>
-                    <td><div className="ledger-cell"><span className="ledger-code">{ledger.code}</span><strong>{ledger.name}</strong><small>{formatMoney(ledger.signedCurrentPaise, 'LAKHS')} · {ledger.group}</small></div></td>
+                    <td><div className="ledger-cell"><span className="ledger-code">{ledger.code}</span><strong>{ledger.name}</strong><small>{formatMoney(ledger.signedCurrentPaise, workspace.company.displayScale)} · {ledger.group}</small></div></td>
                     <td>
                       <select value={mapping?.taxonomyCode ?? ''} disabled={busyId === ledger.id} onChange={(event) => void changeMapping(ledger.id, event.target.value)} aria-label={`Mapping for ${ledger.name}`}>
                         <option value="" disabled>Select a statement head</option>

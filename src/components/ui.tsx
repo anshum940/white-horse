@@ -31,7 +31,8 @@ export function MetricCard({
   comparative,
   icon,
   tone = 'default',
-  suffix
+  suffix,
+  scale = 'LAKHS'
 }: {
   label: string;
   value: number;
@@ -39,6 +40,7 @@ export function MetricCard({
   icon: IconName;
   tone?: 'default' | 'emerald' | 'sand' | 'rose';
   suffix?: string;
+  scale?: DisplayScale;
 }) {
   const variance = comparative === undefined ? null : variancePercent(value, comparative);
   const positive = variance !== null && variance >= 0;
@@ -48,7 +50,7 @@ export function MetricCard({
         <span className="metric-label">{label}</span>
         <span className="metric-icon"><Icon name={icon} size={17} /></span>
       </div>
-      <strong className="metric-value">{suffix ? `${value.toFixed(2)}${suffix}` : formatMoney(value, 'LAKHS')}</strong>
+      <strong className="metric-value">{suffix ? `${value.toFixed(2)}${suffix}` : formatMoney(value, scale)}</strong>
       {comparative !== undefined && (
         <div className={`metric-variance ${positive ? 'positive' : 'negative'}`}>
           <Icon name={positive ? 'arrow-up' : 'arrow-down'} size={13} />
@@ -69,17 +71,17 @@ export function ProgressBar({ value, tone = 'green' }: { value: number; tone?: '
   );
 }
 
-export function TrendBars({ current, comparative, labels = ['Prior', 'Current'] }: { current: number; comparative: number; labels?: [string, string] }) {
+export function TrendBars({ current, comparative, labels = ['Prior', 'Current'], scale = 'LAKHS' }: { current: number; comparative: number; labels?: [string, string]; scale?: DisplayScale }) {
   const max = Math.max(Math.abs(current), Math.abs(comparative), 1);
   return (
     <div className="trend-bars" aria-label={`${labels[0]} ${comparative}, ${labels[1]} ${current}`}>
       <div className="trend-column">
-        <span className="trend-value">{formatMoney(comparative, 'LAKHS')}</span>
+        <span className="trend-value">{formatMoney(comparative, scale)}</span>
         <span className="trend-bar trend-prior" style={{ height: `${Math.max(8, (Math.abs(comparative) / max) * 100)}%` }} />
         <small>{labels[0]}</small>
       </div>
       <div className="trend-column">
-        <span className="trend-value">{formatMoney(current, 'LAKHS')}</span>
+        <span className="trend-value">{formatMoney(current, scale)}</span>
         <span className="trend-bar trend-current" style={{ height: `${Math.max(8, (Math.abs(current) / max) * 100)}%` }} />
         <small>{labels[1]}</small>
       </div>

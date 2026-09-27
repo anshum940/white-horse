@@ -562,3 +562,176 @@ This closing log update changes only `PROJECT_LOG.md`. Its commit message will i
 - 2026-09-27: Completed fresh device authentication as `anshum940`, configured repository-local no-reply Git identity, passed final hygiene checks, committed the verified application, created and pushed the approved public repository, and enabled GitHub Pages with enforced HTTPS.
 - 2026-09-27: Diagnosed the initial one-time Pages activation race, enabled workflow-based Pages publishing, reran only the failed work, and verified successful build/deployment run `36305550565` (attempt 2). Confirmed HTTP 200 for the app shell, manifest, service worker, and icon, then completed live public-browser navigation, statement, export, console, and PWA-ready checks.
 - 2026-09-27: Pushed the deployment-evidence documentation commit and verified its complete follow-up workflow `36305988448` succeeded. Corrected a harmless workflow display-name lookup error and prepared this closing documentation-only commit with GitHub's documented `[skip ci]` marker to avoid an otherwise recursive redundant deployment.
+
+## Product-hardening phase requested on 2026-09-27
+
+### New objective and user feedback
+
+The user reported that multiple functions/controls appear not to work and requested a sellable, company-independent product rather than a single-company demonstration. The requested outcomes are:
+
+- Rename the synthetic preparer display name from `Aarav Mehta` to `Abhijit`.
+- Ensure every visible function/control has real behaviour; remove or clearly disable anything that is not implemented.
+- Support configurable companies and reporting periods rather than binding the application to Saffron Industries.
+- Provide a separate, explicit Trial Balance import template and make its required format prominent in the application.
+- Generate the complete supported financial-statement pack in one action: Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, notes/accounting policies, ratios, validations, and supporting exports.
+- Preserve Schedule III presentation and traceability while preparing the product for demonstration to multiple prospective companies.
+
+### Scope clarification and compliance boundary
+
+“Any company” cannot truthfully be represented by one universal Schedule III taxonomy. Division I applies to companies following Accounting Standards, Division II to companies following Ind AS, and Division III to NBFCs following Ind AS; sector-specific laws, consolidation, accounting policies, and current MCA/ICAI requirements add further differences. This phase will productise and fully exercise the existing **standalone Schedule III Division I commercial/industrial** workflow, add explicit framework/entity metadata and extension boundaries, and avoid claiming that unimplemented Division II, Division III, consolidated, banking, insurance, or regulated-sector requirements are complete. Those require separately validated taxonomy/rule packs and professional compliance review before sale.
+
+### Initial discovery
+
+Commands used:
+
+```powershell
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project status --short --branch
+rg --files -g '!node_modules' -g '!dist'
+Get-Content package.json
+rg -n "Aarav|Saffron|button|onClick|download|export|import|Schedule III|Division" src docs README.md PROJECT_LOG.md
+```
+
+Findings:
+
+- The repository was clean and synchronized with `origin/main` before this phase.
+- `OverviewPage` hard-codes `Good morning, Aarav` instead of reading the active local user.
+- The seed dataset and sample filename are deliberately synthetic, but the company setup and workspace-loading path must be reviewed for true multi-company behaviour.
+- The statements page contains an unlabeled `more` icon control with no handler; similar decorative controls must be found systematically.
+- Existing CSV/XLSX import, mapping, adjustments, validations, statement calculations, notes, ratios, workbook export, backup/restore, finalisation, and audit foundations can be extended instead of rewritten.
+
+### Implementation completed in the working tree
+
+The working tree now contains the following product-hardening changes; final publication is pending the remaining verification gates:
+
+- Replaced the rendered `Aarav Mehta`/`Aarav` identity with the browser-local preparer `Abhijit`, including an idempotent data-maintenance migration for existing browser databases.
+- Added independent company/workspace creation, editing, switching, period configuration, materiality, display-scale, and local-user administration instead of a single hard-coded company path.
+- Added a full 30-note Division I disclosure workbench and note schedules, while retaining an explicit requirement for preparer/reviewer completion of entity-specific narrative and regulatory disclosures.
+- Added the complete analytical ratio schedule, transparent formulas and limitations, CSV export, and an honest `N/A` state where principal-repayment or other required inputs do not exist.
+- Added the prescribed eight-column Trial Balance template in CSV and XLSX, an in-application format reference, source-controlled sample template, and detailed import specification at `docs/TRIAL_BALANCE_IMPORT_FORMAT.md`.
+- Added a one-click Excel pack containing Cover, Balance Sheet, Profit and Loss, Cash Flow, Notes to Accounts, Ratios, Trial Balance, Mapping, Adjustments, Validation, and Audit Trail worksheets.
+- Wired the global company switcher, search, notifications, user profile, Company Setup edit/create/user controls, TB filters/template actions, mapping lock, validation run, notes search/review controls, ratio export, report pack selectors/print controls, and complete financial-pack actions. The unused statements overflow control was removed.
+- Added route-level lazy loading and source-level control-wiring regression coverage.
+
+Initial post-implementation gates passed:
+
+```text
+npm run typecheck: passed
+npm test: 10 files, 20/20 tests passed
+npm run build: passed
+Production entry chunk: 400.93 kB minified / 123.04 kB gzip
+PWA precache: 23 entries / 685.41 KiB
+```
+
+### Browser QA findings and fixes in progress
+
+The first preview origin (`127.0.0.1:4176`) served a previously cached application shell through its registered service worker. The symptom was that hash navigation worked but newly added modal/state controls did not respond. A fresh origin (`127.0.0.1:4177`) loaded the exact current production bundle; search, template modals, CSV/XLSX template downloads, and Debit/Credit TB filters then worked. This was a QA-origin cache issue, not the current source. Production verification will use a fresh deployed asset revision, and the user guide will document update/refresh behaviour.
+
+The fresh-bundle one-click workbook test then exposed a real export defect:
+
+```text
+`format` "0.0000" was specified on a cell of type `String`.
+The only supported `format` for a cell of type `String` is "@".
+```
+
+Root cause: unavailable ratio values such as DSCR were correctly represented as `N/A`, but the workbook builder applied a numeric cell format to both numbers and the `N/A` string. Fix: a typed `ratioCell` helper now emits numeric-formatted cells only for numbers and plain text cells for unavailable values. The production bundle will be rebuilt on another fresh origin and the complete workbook re-tested before commit or deployment.
+
+After that fix, fresh-origin browser QA showed the full-pack success confirmation. Two generated workbooks were written to the browser download directory at 22,674 bytes each. Read-only spreadsheet inspection of the latest file confirmed all 11 expected worksheets, 30 disclosure notes, 12 ratio rows, the intentional text `N/A` only for DSCR, 27 TB rows, exact TB equality of INR 75,550,000 on each side, Balance Sheet equality of INR 31,000,000, and no spreadsheet error tokens. Every sheet and the separate XLSX TB template were rendered and visually reviewed; no clipped core financial values, broken layouts, or invalid cell types were found.
+
+The company-creation workflow then exposed a selection race. The new Northstar Components test workspace was successfully inserted, but the application immediately returned to Saffron Industries. Root cause: `activeCompanyId` changed before the `useLiveQuery` company-list snapshot refreshed, so the stale-list fallback treated the just-created ID as invalid. Fix: the fallback now reads the selected workspace from IndexedDB and only selects a fallback when that read confirms the ID is genuinely absent. This change is awaiting a rebuilt fresh-origin retest.
+
+### Completed browser and spreadsheet verification
+
+The selection-race fix was rebuilt and tested on the fresh origin `127.0.0.1:4179`. The browser created and selected the synthetic `Northstar Components Private Limited` workspace, showing its own legal identity, zero balances, 30 blank disclosure workpapers, 20% initial workflow score, and blocking `TB-000` result. Complete-financials generation correctly refused to proceed until a Trial Balance is imported. The company switcher listed both independent workspaces and returned to Saffron Industries without changing Saffron's balances.
+
+The browser QA also confirmed:
+
+- Global search filters pages/ledgers/notes and navigates to Trial Balance.
+- Notifications list the two current Saffron review warnings and open the review centre.
+- The profile control displays `Abhijit`, `@abhijit`, and the PREPARER role.
+- TB format modal shows all eight prescribed columns and downloads both CSV and XLSX templates.
+- All/Debit/Credit TB filters return 27/16/11 rows respectively.
+- Validation execution records a run and reports three current results.
+- Notes show 30 items and search narrows the index to the requested disclosure.
+- Ratio CSV export reports success and the downloaded file contains all 12 rows, with DSCR blank/`N/A` because principal repayment is not available.
+- Mapping review locks all 27 active mappings and records an audit event.
+- One-click financials completes after the ratio-cell correction.
+- Final browser console error/warning log is empty.
+
+Read-only spreadsheet verification used the bundled spreadsheet runtime and `@oai/artifact-tool`; no workbook was altered during inspection. The downloaded full workbook contained:
+
+```text
+Cover:             15 rows × 2 columns
+Balance Sheet:     37 rows × 4 columns
+Profit and Loss:   20 rows × 4 columns
+Cash Flow:         17 rows × 4 columns
+Notes to Accounts: 31 rows × 8 columns (header + 30 notes)
+Ratios:            13 rows × 7 columns (header + 12 ratios)
+Trial Balance:     28 rows × 6 columns (header + 27 ledgers)
+Mapping:           28 rows × 6 columns
+Adjustments:        4 rows × 8 columns
+Validation:         4 rows × 7 columns
+Audit Trail:        4 rows × 9 columns
+```
+
+Independent controls observed from the saved XLSX:
+
+```text
+Balance Sheet total assets:                  INR 31,000,000.00
+Balance Sheet total equity and liabilities:  INR 31,000,000.00
+Trial Balance total debits:                   INR 75,550,000.00
+Trial Balance total credits:                  INR 75,550,000.00
+Spreadsheet error-token scan:                 0 matches
+Intentional unavailable ratios:               DSCR only
+```
+
+All 11 workbook worksheets and the prescribed XLSX TB template were rendered and visually reviewed. The TB template has the exact eight headers, two balanced `EXAMPLE-*` rows, typed numeric INR values, and a visible instruction to replace both examples.
+
+### Final local quality and security gates
+
+Commands and results:
+
+```powershell
+npm run typecheck
+# passed
+
+npm test
+# 10 test files, 20/20 tests passed
+
+npm run build
+# passed; 181 modules; entry 400.99 kB / 123.07 kB gzip
+# PWA precache: 23 entries / 685.47 KiB
+
+npm audit --audit-level=moderate
+# first restricted-sandbox request could not reach the npm audit endpoint
+# approved network retry: found 0 vulnerabilities
+
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project diff --check
+# passed with no whitespace errors
+
+rg <targeted secret patterns>
+# no credential/private-key/personal-email matches
+```
+
+The first audit failure was an environment/network restriction and inability to write the normal host npm log directory, not a dependency result. The required outside-sandbox retry reached the official npm registry and returned zero vulnerabilities.
+
+Temporary spreadsheet inspection scripts, rendered QA images, and their dependency junction were deleted after verification. Browser-downloaded QA exports remain in the user's normal Downloads directory because deleting user files was not part of the request.
+
+### Documentation synchronisation
+
+Updated `README.md`, `docs/USER_GUIDE.md`, `docs/REPORT_CATALOG.md`, and the new `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` to cover multi-company operation, the exact TB schema, 30-note/12-ratio workbenches, 11-sheet one-click output, service-worker update behaviour, and the honest commercial-readiness boundary.
+
+### Authoritative accounting-framework references refreshed
+
+- MCA Schedule III amendment notification dated 24 March 2021: https://www.mca.gov.in/Ministry/pdf/ScheduleIIIAmendmentNotification_24032021.pdf
+- ICAI Guidance Note on Division I (revised January 2022): https://publication.icai.org/publication/76
+- ICAI Guidance Note on Division II: https://publication.icai.org/publication/77
+- ICAI Guidance Note on Division III: https://publication.icai.org/publication/79
+- ICAI Corporate Laws and Corporate Governance publications index: https://www.icai.org/post/icai-publications-corporate-laws-corporate-governance-committee
+
+These sources support the explicit scope boundary: Division I, Division II, and Division III require different presentation/disclosure packs. Banking, insurance, regulated-sector, consolidated, and entity-specific requirements must not be represented as covered by the current Division I module.
+
+### Pre-deployment result and remaining commercial work
+
+The working tree is ready for commit and public Pages deployment. The supported current product boundary is multi-company, standalone Schedule III Division I, non-Ind AS, commercial/industrial preparation with professional review. Before selling it as a production SaaS or claiming support for every company, the next programme must add separately validated Division II/III and sector packs, server-side tenant isolation, real identity and role enforcement, central backups, observability, incident/support operations, privacy/legal review, licensing, automated migration/retention controls, and independent accounting/security acceptance testing.
+
+Immediately before publication, repository-local Git identity was reverified as `Anshum <105625445+anshum940@users.noreply.github.com>` and the `origin` remote as `https://github.com/anshum940/white-horse.git`. `gh auth status` found the previously saved token invalid, so no push was attempted. A fresh GitHub CLI web/device flow was completed and independently verified against the GitHub API as active account `anshum940` (numeric ID `105625445`); token contents were not printed or stored in project documentation.

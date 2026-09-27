@@ -20,6 +20,7 @@ const adjustmentTypes: Array<{ value: Adjustment['type']; label: string }> = [
 ];
 
 export function AdjustmentsPage({ workspace, notify }: { workspace: WorkspaceData; notify: (message: string, tone?: 'success' | 'error') => void }) {
+  const preparerName = workspace.users.find((user) => user.id === 'demo-preparer')?.displayName ?? workspace.users.find((user) => user.role === 'PREPARER' && user.active)?.displayName ?? 'Abhijit';
   const [showNew, setShowNew] = useState(false);
   const [busyId, setBusyId] = useState<string>();
   const [form, setForm] = useState({
@@ -89,7 +90,7 @@ export function AdjustmentsPage({ workspace, notify }: { workspace: WorkspaceDat
         <div className="control-stat"><span>Total journals</span><strong>{workspace.adjustments.length}</strong><small>Current revision</small></div>
         <div className="control-stat control-success"><span>Posted</span><strong>{workspace.adjustments.filter((item) => item.status === 'POSTED').length}</strong><small>Included in adjusted TB</small></div>
         <div className="control-stat"><span>Awaiting review</span><strong>{workspace.adjustments.filter((item) => item.status === 'SUBMITTED').length}</strong><small>Excluded until posted</small></div>
-        <div className="control-stat"><span>Posted debit impact</span><strong>{formatMoney(postedImpact, 'LAKHS')}</strong><small>₹ in lakhs</small></div>
+        <div className="control-stat"><span>Posted debit impact</span><strong>{formatMoney(postedImpact, workspace.company.displayScale)}</strong><small>₹ in {workspace.company.displayScale.toLowerCase()}</small></div>
       </section>
       <section className="adjustment-list">
         {workspace.adjustments.map((adjustment) => {
@@ -101,13 +102,13 @@ export function AdjustmentsPage({ workspace, notify }: { workspace: WorkspaceDat
               <div className="adjustment-main">
                 <div className="adjustment-ref"><span>{adjustment.referenceNumber}</span><StatusBadge tone={adjustment.status === 'POSTED' ? 'green' : adjustment.status === 'SUBMITTED' ? 'amber' : adjustment.status === 'REJECTED' ? 'red' : 'neutral'}>{adjustment.status}</StatusBadge></div>
                 <h3>{adjustment.narration}</h3>
-                <div className="adjustment-meta"><span>{adjustment.type.replaceAll('_', ' ')}</span><span>{adjustment.entryDate}</span><span>{adjustment.workpaperReference}</span><span>Prepared by Aarav Mehta</span></div>
+                <div className="adjustment-meta"><span>{adjustment.type.replaceAll('_', ' ')}</span><span>{adjustment.entryDate}</span><span>{adjustment.workpaperReference}</span><span>Prepared by {preparerName}</span></div>
               </div>
-              <div className="adjustment-amount"><span>Journal total</span><strong>{formatMoney(debit, 'LAKHS')}</strong><small className={debit === credit ? 'positive' : 'negative'}>{debit === credit ? 'Debits = credits' : 'Out of balance'}</small></div>
+              <div className="adjustment-amount"><span>Journal total</span><strong>{formatMoney(debit, workspace.company.displayScale)}</strong><small className={debit === credit ? 'positive' : 'negative'}>{debit === credit ? 'Debits = credits' : 'Out of balance'}</small></div>
               <div className="journal-lines">
                 {lines.map((line) => {
                   const ledger = workspace.ledgers.find((item) => item.id === line.ledgerId);
-                  return <div key={line.id}><span>{line.lineNumber}. {ledger?.name ?? 'Historical ledger'}</span><strong>{line.debitPaise ? `Dr ${formatMoney(line.debitPaise, 'LAKHS')}` : `Cr ${formatMoney(line.creditPaise, 'LAKHS')}`}</strong></div>;
+                  return <div key={line.id}><span>{line.lineNumber}. {ledger?.name ?? 'Historical ledger'}</span><strong>{line.debitPaise ? `Dr ${formatMoney(line.debitPaise, workspace.company.displayScale)}` : `Cr ${formatMoney(line.creditPaise, workspace.company.displayScale)}`}</strong></div>;
                 })}
               </div>
               {adjustment.status === 'SUBMITTED' && (
