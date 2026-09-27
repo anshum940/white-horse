@@ -1028,3 +1028,46 @@ https://github.com/anshum940/white-horse.git
 `git diff --check` passed. A targeted tracked/untracked source scan found no private-key blocks, GitHub personal-access-token patterns, or AWS access-key identifiers. The working tree contains only this corrective batch and its documentation/tests.
 
 The first staging command was rejected by Git's dubious-ownership protection because the managed sandbox created `.git` under its service SID while the current Windows user has a different SID. No file was staged by that failed command. The safe fix was a command-scoped override—`git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project add ...`—rather than changing the user's global Git configuration. Staging then succeeded.
+
+### Commit and public deployment
+
+The tested correction batch was committed locally:
+
+```text
+Commit:  a9e00ea6925a484a68e309f7ce44d65d1d149541
+Subject: fix: validate company setup and local persistence
+Branch:  main
+```
+
+Before the push, a fresh GitHub device-code authorization was initiated and completed by the user. `gh auth status` showed `anshum940` as the active account, and the GitHub API independently returned login `anshum940`, numeric account ID `105625445`. Other saved accounts remained inactive. Token contents were masked and were not stored in project files.
+
+```text
+Push: 179696e..a9e00ea main -> main
+Repository: https://github.com/anshum940/white-horse.git
+```
+
+GitHub Actions run `36346182003` completed successfully: https://github.com/anshum940/white-horse/actions/runs/36346182003
+
+- **Verify and build** completed in 21 seconds: locked dependency installation, dependency audit, type-check, all tests, production PWA build, Pages configuration, and artifact upload passed.
+- **Deploy to Pages** completed in 8 seconds.
+- The only annotation is GitHub's informational future migration of `ubuntu-latest` to Ubuntu 26 beginning 19 October 2026.
+
+The first restricted public-origin fetch was blocked by the workspace socket policy and consequently attempted to inspect a null response. The approved network retry succeeded with HTTP 200, HSTS `max-age=31556952`, and the exact final production assets:
+
+```text
+/white-horse/assets/index-tqsbjUX_.js
+/white-horse/assets/index-593X4bZ1.css
+```
+
+The existing live in-app browser profile initially rendered the previous cached application shell, then correctly displayed **A verified update is available**. Selecting **Update** activated the deployed service worker without deleting or replacing the existing Saffron Industries IndexedDB workspace. Live UI inspection then confirmed:
+
+```text
+CIN maxlength:       21
+CIN pattern:         [LU][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}
+Current default:     FY 2026–27
+Comparative default: FY 2025–26
+Blank-form submit:   disabled
+Console issues:      0
+```
+
+The public release is available at https://anshum940.github.io/white-horse/. This deployment record will be saved in a documentation-only `[skip ci]` follow-up commit to avoid running and redeploying the unchanged application a second time.
