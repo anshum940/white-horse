@@ -859,3 +859,34 @@ Browser QA against the production bundle confirmed:
 - Activation was intentionally not confirmed, so the existing demonstration Trial Balance was not changed.
 
 One first browser file-chooser attempt targeted the hidden file input and timed out. Root cause: the in-app browser exposes its chooser only when the visible upload surface is clicked. The browser session was re-established, the documented visible-surface chooser flow was used, and both CSV and XLSX verification then passed.
+
+### Commit and public deployment
+
+Repository-local Git identity and remote were reverified before commit:
+
+```text
+Anshum <105625445+anshum940@users.noreply.github.com>
+https://github.com/anshum940/white-horse.git
+```
+
+Because GitHub authentication is account-sensitive, a fresh GitHub CLI web/device authorization was completed. The authenticated account was independently verified through the GitHub API as `anshum940`, numeric ID `105625445`, before any push. Token contents were not printed or stored in project files.
+
+The verified implementation was committed and pushed:
+
+```text
+Commit:  1609828cad1f44c52e413643dbafdea7928fd294
+Subject: feat: standardize trial balance imports
+Branch:  main
+Push:    c675d66..1609828 main -> main
+```
+
+GitHub Actions run `36344317877` (`https://github.com/anshum940/white-horse/actions/runs/36344317877`) completed successfully. The `Verify and build` job passed dependency installation, audit, type-check, all tests, production build, Pages configuration, and artifact upload in 30 seconds. `Deploy to Pages` completed in 11 seconds. The only annotation is GitHub's informational future migration of `ubuntu-latest` to Ubuntu 26 beginning 19 October 2026.
+
+Post-deployment checks returned HTTP 200 from `https://anshum940.github.io/white-horse/`. The live Standard TB XLSX at `https://anshum940.github.io/white-horse/templates/White_Horse_Standard_TB_Import.xlsx` was downloaded independently and matched the verified local artifact exactly:
+
+```text
+Live length: 17,239 bytes
+Live SHA-256: 7541E4F3237D11C0219D31FAFB0C7C15399789BDF2149CFADBCDCB97BE81372F
+```
+
+This deployment evidence will be saved in a documentation-only follow-up commit with `[skip ci]`, avoiding an unnecessary second application deployment.
