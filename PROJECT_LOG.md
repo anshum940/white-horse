@@ -890,3 +890,141 @@ Live SHA-256: 7541E4F3237D11C0219D31FAFB0C7C15399789BDF2149CFADBCDCB97BE81372F
 ```
 
 This deployment evidence will be saved in a documentation-only follow-up commit with `[skip ci]`, avoiding an unnecessary second application deployment.
+
+## 28 September 2026 — Company-master validation and browser-data durability audit
+
+### Objective and user report
+
+The user identified that the Company Setup form accepts an invalid Corporate Identity Number (CIN) and requested a systematic bug audit followed by one-by-one fixes. The first explicit requirement is that CIN accept only the prescribed 21-character alphanumeric identifier. The user also asked whether newly created companies and subsequent work remain available or can be lost.
+
+### Initial evidence and risk statement
+
+Code inspection confirmed that the repository layer currently checks only whether CIN is non-empty and unique in the current browser. The Company Setup input has no `maxLength`, character restriction, inline validation, or CIN-format check. Date-range validation checks each range internally but does not prevent the comparative period from overlapping or following the current period. The form also waits until save to surface most errors as a transient notification, which makes correction unnecessarily difficult.
+
+The database is IndexedDB (`white-horse-production`) accessed through Dexie. It is durable across ordinary reloads, tab/browser restarts, and application-code deployments on the same origin and browser profile. It is not account-based cloud storage and does not synchronise between devices or browser profiles. Browser/site-data deletion, private-session closure, storage eviction while the origin remains best-effort, corruption, or an incompatible migration can remove browser-local data. Encrypted backup/restore exists under Finalisation and remains the required recovery control.
+
+### Authoritative research
+
+- MCA form instruction kits require a valid/approved CIN and use it as the authoritative company identifier; the implementation will apply the standard 21-character CIN shape locally and clearly state that syntactic validation is not an MCA master-data verification: https://www.mca.gov.in/content/dam/mca/mca-forms-instruction-kit/Instruction%20Kit_Form%20No%20DIR%203C.pdf
+- MDN documents IndexedDB as persistent client-side browser storage, while explicitly noting that users can clear it, private browsing removes it at session end, quota/corruption can affect it, and synchronisation requires a separate server-side design: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Basic_Terminology
+- Browser storage is best-effort by default. `navigator.storage.persist()` can request persistent mode, but the browser may deny the request and explicit user deletion still removes the data: https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria and https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist
+
+### Planned corrective work
+
+1. Centralise and test company-master validation in the domain layer so UI and database writes cannot diverge.
+2. Enforce and explain the 21-character CIN structure, normalise lowercase input, reject non-alphanumeric characters, and retain duplicate-CIN protection.
+3. Add inline errors and prevent submission while the form is invalid.
+4. Tighten reporting/comparative period chronology and materiality validation.
+5. Expose browser-storage durability state and allow a user-initiated persistent-storage request on supported HTTPS browsers, while preserving the encrypted-backup warning.
+6. Exercise creation, validation, reload persistence, and editing through automated tests and the production browser bundle before deployment.
+
+### Commands and observations to date
+
+```powershell
+git status --short --branch
+# main...origin/main; no working-tree changes before this audit
+
+rg -n --hidden --glob '!node_modules/**' "\\b(cin|CIN|Company|company|IndexedDB|Dexie|persist|backup|materiality|periodStart|periodEnd)\\b" src PROJECT_LOG.md README.md docs package.json
+# Located Company Setup, database validation, backup/restore, IndexedDB documentation, and existing persistence disclosures.
+
+Get-Content -Raw src\pages\CompanyPage.tsx
+Get-Content src\db.ts | Select-Object -First 390
+# Confirmed the missing CIN/UI validation and existing browser-local persistence architecture.
+```
+
+### First corrective batch implemented
+
+The code now has one domain-level validation policy used by both the React form and the IndexedDB repository. This prevents direct/service-layer calls from bypassing browser controls.
+
+Resolved defects:
+
+1. **CIN accepted arbitrary text** — the UI now uppercases input, removes characters outside `A–Z` and `0–9`, caps the field at 21 characters, displays the live count, and checks the established `L/U + 5 digits + 2 letters + 4 digits + 3 letters + 6 digits` structure. The repository repeats the validation before every create/update. This is a format check, not a live MCA master-data verification.
+2. **New-company dates were hard-coded to FY 2025–26** — defaults are now derived from the current Indian financial year, including January–March rollover and the preceding comparative year.
+3. **Impossible calendar dates were accepted by service calls** — ISO calendar dates are now validated by components, so values such as 30 February are rejected.
+4. **Comparative/current periods could overlap** — each range must be internally ordered and the comparative end must precede the current start.
+5. **Identical current/comparative labels were accepted** — case-insensitive duplicate labels are blocked.
+6. **Invalid materiality and unbounded master text** — positive safe-integer paise validation remains enforced, decimal-conversion errors are displayed inline, supported presentation scales are checked at runtime, and reasonable legal-name/trade-name/address/industry/label limits are enforced.
+7. **Only transient save errors were shown** — required markers, inline field errors, an error count, accessibility state, and a disabled save action now make the correction path visible before a write.
+8. **Persistence risk was implicit** — Company Setup now reports `PERSISTENT`, `BEST EFFORT`, `NOT SUPPORTED`, or `UNAVAILABLE`, offers a user-initiated persistent-storage request where supported, explains that this remains same-browser storage, and links directly to backup/restore.
+
+### Automated checks and encountered errors
+
+```powershell
+npm run typecheck
+# passed
+
+npm test
+# initial post-change run: 12 test files, 31/31 passed
+
+npm test -- --runInBand
+# failed before tests: Vitest 5 does not support the Jest-specific --runInBand option
+```
+
+Root cause: `--runInBand` is a Jest CLI option and is not recognised by the installed Vitest 5 CLI. No source-code failure occurred. The unsupported argument was removed.
+
+The first database-integration run then reported three `DatabaseClosedError` failures. Root cause: the test deleted the singleton Dexie database and immediately called application initialisation without explicitly reopening that same closed instance. The fixture now performs `await db.open()` after deletion, accurately restoring the lifecycle used by the application.
+
+```powershell
+npm test
+# after fixture correction: 13 test files, 34/34 tests passed
+```
+
+The new database tests verify that an invalid CIN writes no records, a valid company creates its independent 30-note workspace, a duplicate CIN is blocked, and the company remains readable after the IndexedDB connection is closed and reopened.
+
+### Additional audit corrections
+
+Two further defects were found during the screen-flow audit and corrected:
+
+9. **Misleading encryption wording** — the loading screen said it was opening an “encrypted-browser data layer”, while the documented architecture correctly states that IndexedDB is not encrypted by White Horse at rest. The copy now says “browser-local data layer”. Encrypted `.whbackup` exports remain encrypted; IndexedDB itself is not represented as encrypted.
+10. **Enter key did not submit Company Setup** — the modal used click handlers without a semantic HTML form. Company Setup now uses a real form and linked submit button, so Enter submits a valid form while invalid state remains blocked. This also improves keyboard and assistive-technology semantics.
+
+### Production-bundle browser verification
+
+The first production bundle was served on the fresh local origin `127.0.0.1:4181`. Browser QA confirmed:
+
+- Company Setup reported `BEST EFFORT` storage and displayed **Protect browser storage** plus **Open backup & restore**.
+- New-company defaults were FY 2026–27 and comparative FY 2025–26 on 28 September 2026.
+- Pasting `abc-123` into CIN produced `ABC123`, showed `CIN must contain exactly 21 characters (6/21)`, and kept creation disabled.
+- Pasting a lowercase/hyphenated valid identifier produced `U62010DL2026PTC654321`, enabled creation, and created a separate synthetic `Validation Test Private Limited` workspace.
+- A full page reload retained that company as the active workspace.
+- The company switcher displayed both the new independent workspace and the untouched Saffron Industries demonstration.
+- An identical current/comparative label showed the inline conflict and disabled saving.
+- Browser console warnings/errors: zero.
+
+An automated date-input fill changed Chromium's rendered date value without firing React's change event; the next text-field event restored the controlled date value. Root cause: the browser automation path did not emulate the segmented native date control's user event. This was a test-harness limitation, not an application write. Date chronology is covered by direct domain tests, and no invalid date was saved.
+
+After the semantic form and corrected loading copy were added, the final bundle was rebuilt and served on the clean origin `127.0.0.1:4182`. A valid synthetic `Keyboard Test Private Limited` workspace was created by pressing Enter from the Industry field. A full reload retained it, and the final browser console again contained zero warnings/errors.
+
+Final local gates at this stage:
+
+```powershell
+npm run typecheck
+# passed
+
+npm test
+# 13 test files, 34/34 tests passed
+
+npm run build
+# passed; 183 modules; entry 403.08 kB / 123.90 kB gzip
+# PWA precache: 25 entries / 695.50 KiB
+
+npm audit --audit-level=moderate
+# restricted attempt could not reach the official npm audit endpoint and could not write its host cache log
+# approved network retry: found 0 vulnerabilities
+```
+
+Pre-commit repository checks confirmed the expected identity and remote:
+
+```text
+Git:  C:\Program Files\Git\cmd\git.exe
+GH:   C:\Program Files\GitHub CLI\gh.exe
+Node: C:\Users\anshu\nodejs\node.exe
+npm:  C:\Users\anshu\nodejs\npm.ps1
+
+Anshum <105625445+anshum940@users.noreply.github.com>
+https://github.com/anshum940/white-horse.git
+```
+
+`git diff --check` passed. A targeted tracked/untracked source scan found no private-key blocks, GitHub personal-access-token patterns, or AWS access-key identifiers. The working tree contains only this corrective batch and its documentation/tests.
+
+The first staging command was rejected by Git's dubious-ownership protection because the managed sandbox created `.git` under its service SID while the current Windows user has a different SID. No file was staged by that failed command. The safe fix was a command-scoped override—`git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project add ...`—rather than changing the user's global Git configuration. Staging then succeeded.

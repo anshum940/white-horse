@@ -8,13 +8,15 @@ The preloaded Saffron Industries Private Limited workspace is synthetic.
 
 ## 2. Workspace model
 
-White Horse stores data inside the browser. One browser profile can contain multiple independent company workspaces. Opening the public URL on another browser or device creates a separate local database. There is no automatic cloud synchronisation. Use an encrypted backup to move a controlled database between browsers.
+White Horse stores data inside IndexedDB in the browser. One browser profile can contain multiple independent company workspaces. A created company remains after ordinary reloads, browser restarts, and application deployments when the same White Horse URL and browser profile are used. Opening the public URL on another browser, profile, device, or origin creates a separate local database. There is no automatic cloud synchronisation.
+
+Company Setup displays whether the browser reports `PERSISTENT`, `BEST EFFORT`, or an unavailable/unsupported persistence state. Use **Protect browser storage** where available, but do not treat it as a backup: explicit site-data deletion still removes persistent browser storage. Use an encrypted backup to recover work or move a controlled database between browsers.
 
 ## 3. Recommended workflow
 
 ### Company and period
 
-Select the company switcher in the top bar to change workspaces. Use **Company setup → New company** to create a separate company and reporting period. Confirm the legal name, trade name, CIN, registered office, industry, display scale, period, comparative period, and materiality before importing data. This workflow creates a blank workspace with 30 Division I note workpapers and an explicit blocking control until a Trial Balance is activated.
+Select the company switcher in the top bar to change workspaces. Use **Company setup → New company** to create a separate company and reporting period. Confirm the legal name, trade name, CIN, registered office, industry, display scale, period, comparative period, and materiality before importing data. CIN is normalised to uppercase alphanumeric and must contain exactly 21 characters in the standard `L/U + 5 digits + 2 letters + 4-digit year + 3 letters + 6 digits` structure. This is a local syntax check; verify the identifier and company details against MCA master data. Comparative dates must be valid, internally ordered, and end before the current period begins. This workflow creates a blank workspace with 30 Division I note workpapers and an explicit blocking control until a Trial Balance is activated.
 
 Use **Edit setup** to correct the active company/period. Use **Add local user** or a user's settings control to maintain browser-local role records. These roles are workflow metadata, not production authentication or access control.
 
@@ -76,6 +78,7 @@ Use **Reset synthetic demo** only when you intentionally want to discard the loc
 | Mapping gate remains open | One or more active ledgers are unmapped or not locked | Review and approve every ledger mapping |
 | Finalisation blocked | Submitted adjustment, incomplete note, or open validation | Resolve the underlying item and retain evidence |
 | Data missing on another device | Browser-local storage is intentionally isolated | Transfer a verified encrypted backup |
+| Company missing after clearing browser data or closing a private session | IndexedDB for the White Horse origin was deleted | Restore a verified encrypted backup; persistent-storage mode cannot override explicit deletion |
 | Site loads while offline but badge says online | Browser network status can remain online while the origin server is unavailable | Treat successful cached reload as shell availability; reconnect before expecting application updates |
 | A deployed update is available but an old screen remains open | The service worker preserves the current shell until it is safe to update | Save/export work, select **Update** when prompted, or close and reopen the site; do not clear site data unless a backup exists |
 | Complete-financials export is blocked | No active TB or one or more ledgers are unmapped | Activate a balanced TB, complete mapping, then generate again |

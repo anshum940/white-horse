@@ -15,6 +15,10 @@ import {
 import { createDivisionINoteTemplates } from './data/noteTemplates';
 import { RULESET_VERSION, TAXONOMY_VERSION, taxonomyByCode } from './data/taxonomy';
 import { hashRecord } from './domain/security';
+import {
+  assertValidCompanyWorkspaceInput,
+  type CompanyWorkspaceInput
+} from './domain/companyValidation';
 import type {
   Adjustment,
   AdjustmentLine,
@@ -63,21 +67,7 @@ export class WhiteHorseDatabase extends Dexie {
 
 export const db = new WhiteHorseDatabase();
 
-export interface CompanyWorkspaceInput {
-  legalName: string;
-  tradeName: string;
-  cin: string;
-  registeredOffice: string;
-  industry: string;
-  displayScale: Company['displayScale'];
-  periodLabel: string;
-  startDate: string;
-  endDate: string;
-  comparativeLabel: string;
-  comparativeStartDate: string;
-  comparativeEndDate: string;
-  materialityPaise: number;
-}
+export type { CompanyWorkspaceInput } from './domain/companyValidation';
 
 export interface CompanyWorkspaceSummary {
   companyId: string;
@@ -206,30 +196,8 @@ export async function loadDemoWorkspace(): Promise<WorkspaceData | undefined> {
   return loadWorkspace(demoCompany.id, demoPeriod.id);
 }
 
-function validateCompanyWorkspaceInput(input: CompanyWorkspaceInput): void {
-  const required = [
-    input.legalName,
-    input.tradeName,
-    input.cin,
-    input.registeredOffice,
-    input.industry,
-    input.periodLabel,
-    input.startDate,
-    input.endDate,
-    input.comparativeLabel,
-    input.comparativeStartDate,
-    input.comparativeEndDate
-  ];
-  if (required.some((value) => !value.trim())) throw new Error('Complete every company and reporting-period field.');
-  if (input.endDate < input.startDate) throw new Error('The reporting-period end date must not precede its start date.');
-  if (input.comparativeEndDate < input.comparativeStartDate) throw new Error('The comparative-period end date must not precede its start date.');
-  if (!Number.isSafeInteger(input.materialityPaise) || input.materialityPaise <= 0) {
-    throw new Error('Materiality must be a positive amount in paise.');
-  }
-}
-
 export async function createCompanyWorkspace(input: CompanyWorkspaceInput): Promise<string> {
-  validateCompanyWorkspaceInput(input);
+  assertValidCompanyWorkspaceInput(input);
   const duplicate = await db.companies.filter((company) => company.cin.toLowerCase() === input.cin.trim().toLowerCase()).first();
   if (duplicate) throw new Error('A company with this CIN already exists in this browser.');
   const now = new Date().toISOString();
@@ -322,7 +290,7 @@ export async function createCompanyWorkspace(input: CompanyWorkspaceInput): Prom
 }
 
 export async function updateCompanyWorkspace(companyId: string, periodId: string, input: CompanyWorkspaceInput): Promise<void> {
-  validateCompanyWorkspaceInput(input);
+  assertValidCompanyWorkspaceInput(input);
   const [company, period] = await Promise.all([db.companies.get(companyId), db.periods.get(periodId)]);
   if (!company || !period || period.companyId !== company.id) throw new Error('Company workspace was not found.');
   if (period.status === 'FINALISED') throw new Error('Reopen the reporting period before changing its setup.');

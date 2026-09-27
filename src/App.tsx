@@ -133,7 +133,7 @@ export default function App() {
   }
 
   if (workspace === undefined || computed === undefined || companies === undefined) {
-    return <div className="app-loading"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt="White Horse"/><strong>Preparing your local workspace…</strong><span>Opening the encrypted-browser data layer</span></div>;
+    return <div className="app-loading"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt="White Horse"/><strong>Preparing your local workspace…</strong><span>Opening the browser-local data layer</span></div>;
   }
 
   const preparer = workspace.users.find((user) => user.active && user.role === 'PREPARER') ?? workspace.users.find((user) => user.active) ?? workspace.users[0];

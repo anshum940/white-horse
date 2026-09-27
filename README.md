@@ -11,6 +11,7 @@ White Horse is a local-first, multi-company financial-statement preparation work
 - CSV/XLSX Trial Balance preview, validation, versioned activation, and source-row traceability
 - A vendor-neutral, eight-column Standard TB template (`WH-TB-1.0`) in CSV and XLSX
 - Independent company workspaces, reporting periods, materiality settings, display scales, and local role records
+- 21-character CIN format controls, non-overlapping comparative periods, and current financial-year defaults
 - Ledger-to-taxonomy mapping with current/non-current and cash-flow classifications
 - Balanced adjustment journals with preparer/reviewer states and workpaper references
 - Deterministic Balance Sheet, Profit and Loss, and indirect Cash Flow statements
@@ -31,7 +32,7 @@ Amounts must be positive values in INR, not lakhs or crores. Put each balance on
 
 ## Data and privacy model
 
-The hosted site is static. Trial Balances and workspace records are processed and stored in the current browser's IndexedDB database; they are not sent to an application server. Each browser/profile has a separate workspace. GitHub Pages still serves the public application files and may process ordinary request metadata under GitHub's policies.
+The hosted site is static. Trial Balances and workspace records are processed and stored in the current browser's IndexedDB database; they are not sent to an application server. Each browser/profile has a separate workspace. Created companies survive ordinary page reloads, browser restarts, and White Horse application deployments on that same site origin and profile. They are not cloud-synchronised and can still be lost if site data is cleared, a private session ends, storage is evicted/corrupted, or a different browser/profile/device is used. Company Setup reports the browser's persistence mode and can request persistent storage where supported; encrypted backups remain mandatory for recovery. GitHub Pages still serves the public application files and may process ordinary request metadata under GitHub's policies.
 
 Browser storage is not a substitute for endpoint encryption or access control. Use the synthetic sample for public demonstrations. If real data is ever used in a controlled environment, protect the device and browser profile, create encrypted backups, and clear site data when the engagement ends.
 

@@ -15,6 +15,7 @@ GitHub Pages serves the static HTML, JavaScript, CSS, manifest, icon, and servic
 - IndexedDB data is isolated by browser profile and origin, but it is not encrypted by White Horse at rest.
 - Anyone with sufficient access to the device or browser profile may be able to inspect local data.
 - Clearing site data, using private browsing, storage eviction, or changing the origin can remove or isolate the workspace.
+- Persistent-storage mode, where the browser grants it, reduces automatic eviction risk but does not prevent explicit site-data deletion and does not create a cloud copy.
 - Service-worker caches contain the public application shell, not imported Trial Balance records.
 
 ## User-controlled exports
