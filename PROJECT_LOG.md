@@ -7,9 +7,11 @@ This file is the durable source of truth for the White Horse financial-statement
 ## Current status
 
 - Date: 2026-09-27 (Asia/Calcutta)
-- Phase: Implementation, local browser QA, and fresh GitHub authentication complete; repository publication and Pages deployment are next.
-- Application status: A production build has completed successfully. Strict type checking passes, all 16 automated tests pass, the PWA service worker is generated, the current dependency audit reports zero known vulnerabilities, and desktop/mobile/offline browser QA has passed.
-- Public URL status: Expected at `https://anshum940.github.io/white-horse/`; pending repository creation, workflow deployment, and live HTTPS verification.
+- Phase: Implementation, QA, public repository publication, and GitHub Pages deployment complete.
+- Application status: The production PWA is live. Strict type checking passes, all 16 automated tests pass, the current dependency audit reports zero known vulnerabilities, the service worker is generated, and desktop/mobile/cached-offline/live-site QA has passed.
+- Public URL status: **Live and verified over enforced HTTPS:** `https://anshum940.github.io/white-horse/`.
+- Source repository: **Public:** `https://github.com/anshum940/white-horse` (`main`).
+- Deployment status: GitHub Actions run `36305550565`, attempt 2, completed successfully for commit `587c98a1b4e3a8b1a0eddbc00d2b99bdde19387e`; both `Verify and build` and `Deploy to Pages` passed.
 - Preferred hosting direction: GitHub Pages for a stable HTTPS demonstration URL. The application is implemented as a local-first static PWA and the source repository may be public.
 - Repository visibility: Public, explicitly approved by the user on 2026-09-27.
 
@@ -137,27 +139,25 @@ The core product requirement is offline-first operation and local data storage. 
 ## Errors and root-cause analysis
 
 - Initial blocking condition (resolved): a tunnel could not be started because the workspace was empty and no local HTTP port existed. The application is now implemented and buildable.
-- No unresolved runtime defect is known at the current gate. Local browser and deployed-site QA remain to be completed.
+- Initial GitHub Pages workflow failure (resolved): the first workflow attempt reached `Configure GitHub Pages` before the repository's Pages site had been enabled and received HTTP 404. The application build, audit, type check, and tests had already passed. Pages was enabled with `build_type=workflow`, only the failed jobs were rerun, and attempt 2 completed successfully.
+- The generic web-retrieval environment could not open the newly deployed Pages site. Direct HTTPS requests from the host and an independent visible browser both returned/rendered the live site successfully, so this was treated as a retrieval-tool limitation rather than a site failure.
+- The browser automation evaluation sandbox did not expose `navigator` or `performance`, so service-worker registration could not be inspected through that isolated expression API. This does not affect the result: the deployed app displayed its PWA-ready state, `sw.js` and the manifest returned HTTP 200, and a prior stopped-server reload verified the cached offline application shell and IndexedDB workspace.
+- No unresolved runtime or deployment defect is known at the final gate.
 
-## Decisions pending
-
-- Whether the demonstration URL may change on each launch (zero-account Quick Tunnel) or must remain stable (account/domain configuration required).
-- Which application port will be used after implementation; examples currently use `3000` only as a placeholder.
-- The GitHub username that owns the account associated with the supplied email address. This will be determined only after fresh device/browser authentication; the email address alone is not a repository owner identifier.
-
-Resolved decisions:
+## Decisions
 
 - The user approved a public GitHub repository. GitHub Pages is therefore the primary stable HTTPS deployment path.
 - The supplied product brief plus the repository/deployment confirmation are treated as authorisation to implement White Horse in this workspace.
 - Initial validated reporting scope is Schedule III Division I for a standalone commercial/industrial company; other divisions are represented as extension points and will not be mislabelled as complete.
+- A persistent GitHub Pages URL was selected instead of an ngrok/Cloudflare quick tunnel because this static local-first PWA does not require a continuously running local server, and the study link must remain usable when the developer computer is off.
+- The verified GitHub owner is `anshum940`; commits use GitHub's no-reply address rather than the personal email supplied in chat.
 
 ## Next steps
 
-1. Commit the staged, verified project with the repository-local no-reply Git identity.
-2. Create and push the approved public `anshum940/white-horse` repository.
-3. Enable GitHub Pages with GitHub Actions as the publishing source.
-4. Observe the full remote audit/typecheck/test/build/deploy workflow to completion.
-5. Validate the public HTTPS URL, browser console, navigation, synthetic workspace, and deployed offline shell.
+1. Use the live URL for the study demonstration and keep all demonstrated records synthetic or anonymised.
+2. Review `docs/USER_GUIDE.md` for the recommended demonstration flow and `docs/DEPLOYMENT.md` for operations and rollback.
+3. For later source changes, work on a branch, run the local quality gate, review the diff, and merge to `main`; the Pages workflow will redeploy automatically.
+4. Treat this as a study/prototype system until the security, access-control, backup, regulatory, and assurance gaps listed in `SECURITY.md` and the architecture documents are addressed for any production use.
 
 ## Architecture package completed before coding
 
@@ -455,6 +455,72 @@ git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project <operation>
 
 Using that scoped override, the local name/no-reply email were written and project files were staged. The staged secret scan returned no matches. The first staged whitespace check found extra blank lines at EOF in 25 new source/document files; those lines were removed and the working-tree whitespace check passed. Build outputs, dependencies, npm cache, and ordinary generated CSV/XLSX files remain ignored.
 
+## Public repository and GitHub Pages deployment
+
+### Repository publication
+
+The verified project was committed with repository-local identity and published to the user-approved public repository. The durable identifiers are:
+
+```text
+Repository: https://github.com/anshum940/white-horse
+Default branch: main
+Initial commit: 587c98a1b4e3a8b1a0eddbc00d2b99bdde19387e
+Initial subject: feat: build White Horse financial reporting PWA
+Author: Anshum <105625445+anshum940@users.noreply.github.com>
+Pages URL: https://anshum940.github.io/white-horse/
+```
+
+The principal publication and verification operations were:
+
+```powershell
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project commit -m "feat: build White Horse financial reporting PWA"
+gh repo create white-horse --public --source . --remote origin --push
+gh api --method POST repos/anshum940/white-horse/pages -f build_type=workflow
+gh run rerun 36305550565 --repo anshum940/white-horse --failed
+gh run view 36305550565 --repo anshum940/white-horse --json status,conclusion,url,headSha,attempt,jobs
+gh api repos/anshum940/white-horse/pages
+gh repo view anshum940/white-horse --json nameWithOwner,url,visibility,defaultBranchRef
+```
+
+Read-only final evidence confirmed:
+
+- Repository visibility is `PUBLIC` and the default branch is `main`.
+- Pages uses `build_type: workflow`, is public, has no custom domain, and has `https_enforced: true`.
+- Workflow run `36305550565`, attempt 2, is `completed/success` against the initial commit.
+- Every locked-install, dependency-audit, type-check, test, production-build, Pages configuration, artifact-upload, and deployment step passed.
+
+### First workflow failure, root cause, and safe correction
+
+The push triggered the first workflow immediately. The verification/build work passed, but `actions/configure-pages` received HTTP 404 because GitHub Pages had not yet been enabled for this newly created repository. This was an ordering race between repository push and one-time Pages activation, not a source-code or workflow-quality failure.
+
+The repository's Pages site was then enabled through the official API with the GitHub Actions build type. Only the failed workflow work was rerun. Attempt 2 completed successfully: `Verify and build` took approximately 25 seconds and `Deploy to Pages` approximately 11 seconds. GitHub emitted one informational annotation that the `ubuntu-latest` runner label would begin moving to Ubuntu 26 on 2026-10-19; Node.js is pinned explicitly in the workflow, and no current action is required.
+
+### Public HTTPS and live-browser verification
+
+Direct host checks were made against the public origin after the successful deployment:
+
+```powershell
+curl.exe -sS -o NUL -w "%{http_code} %{content_type} %{size_download}" https://anshum940.github.io/white-horse/
+curl.exe -sS -o NUL -w "%{http_code} %{content_type} %{size_download}" https://anshum940.github.io/white-horse/manifest.webmanifest
+curl.exe -sS -o NUL -w "%{http_code} %{content_type} %{size_download}" https://anshum940.github.io/white-horse/sw.js
+curl.exe -sS -o NUL -w "%{http_code} %{content_type} %{size_download}" https://anshum940.github.io/white-horse/white-horse.svg
+```
+
+Observed results:
+
+```text
+/                     200 text/html                    1162 bytes
+/manifest.webmanifest 200 application/manifest+json     409 bytes
+/sw.js                200 JavaScript                   1448 bytes
+/white-horse.svg      200 image/svg+xml                 685 bytes
+```
+
+An independent visible browser then opened the exact public URL, not a localhost preview. The deployed application rendered the synthetic Saffron Industries overview with the expected KPI values and no console warnings/errors. Hash navigation to Notes and Financial Statements worked; the Balance Sheet rendered ₹310.00 lakh on both sides; the deployed workbook export completed locally and displayed its success confirmation; and the application displayed its offline-ready notification. This verifies the study URL and critical public-demo path without exposing a local port.
+
+### Final solution
+
+GitHub Pages is the finished hosting solution. It provides a stable public HTTPS address, requires no always-on laptop or tunnel process, and preserves the application's privacy model because financial workspaces remain in each visitor's browser storage. The public build contains synthetic demonstration data only. A visitor does not receive records stored in another browser, and clearing site storage can remove that visitor's local workspace, so exports/backups remain the portability mechanism.
+
 ## Authoritative references
 
 - Cloudflare Quick Tunnels: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/
@@ -467,7 +533,11 @@ Using that scoped override, the local name/no-reply email were written and proje
 - GitHub Pages overview and plan/repository availability: https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages
 - Creating a GitHub Pages site, public reachability, and GitHub Actions deployment: https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site
 - GitHub Pages HTTPS: https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https
+- GitHub Pages custom workflows: https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages
+- GitHub Pages publishing source: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
 - GitHub authentication guidance: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/about-authentication-to-github
+- GitHub CLI browser/device authentication: https://cli.github.com/manual/gh_auth_login
+- Vite static-site deployment: https://vite.dev/guide/static-deploy.html
 
 ## Change history
 
@@ -480,3 +550,5 @@ Using that scoped override, the local name/no-reply email were written and proje
 - 2026-09-27: Completed the deployable PWA workflows and UI. Diagnosed strict Excel typing, dynamic-import export selection, bundle-size, and restricted-audit issues; final gate passed type checking, all 15 tests, production PWA build, and a live zero-vulnerability audit.
 - 2026-09-27: Completed desktop, 390 × 844 mobile, CSV import preview, workbook/CSV export, statement drill-down, and stopped-server offline QA. Corrected two inert export controls, added the synthetic import file and a sixteenth test, and verified a clean browser console.
 - 2026-09-27: Added SHA-pinned least-privilege GitHub Pages CI/CD, Dependabot, README, privacy/security boundaries, user and deployment guides, and recorded current official-source/action-tag verification. Ready for fresh GitHub device authentication.
+- 2026-09-27: Completed fresh device authentication as `anshum940`, configured repository-local no-reply Git identity, passed final hygiene checks, committed the verified application, created and pushed the approved public repository, and enabled GitHub Pages with enforced HTTPS.
+- 2026-09-27: Diagnosed the initial one-time Pages activation race, enabled workflow-based Pages publishing, reran only the failed work, and verified successful build/deployment run `36305550565` (attempt 2). Confirmed HTTP 200 for the app shell, manifest, service worker, and icon, then completed live public-browser navigation, statement, export, console, and PWA-ready checks.
