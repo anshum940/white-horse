@@ -1,0 +1,28 @@
+Ledger Code,Ledger Name,Group,Subgroup,Closing Debit,Closing Credit,Previous Debit,Previous Credit
+100100,Plant and machinery — net block,Assets,PPE,15000000,0,13800000,0
+100200,ERP software — net block,Assets,Intangibles,500000,0,400000,0
+100300,Quoted strategic investments,Assets,Investments,1000000,0,800000,0
+100400,Deferred tax asset,Assets,Tax,250000,0,150000,0
+110100,Raw materials and finished goods,Assets,Inventory,4800000,0,4200000,0
+110200,Trade receivables — domestic,Assets,Receivables,6200000,0,4900000,0
+110300,Cash and bank balances,Assets,Cash,2400000,0,1500000,0
+110400,Prepaid insurance,Assets,Prepayments,350000,0,250000,0
+110500,GST and other recoverables,Assets,Other current assets,750000,0,300000,0
+200100,Equity share capital,Equity,Share capital,0,5000000,0,5000000
+200200,Retained earnings — opening balance,Equity,Reserves,0,7000000,0,5600000
+210100,Term loan from scheduled bank,Liabilities,Long-term borrowings,0,6000000,0,6500000
+210200,Provision for employee benefits,Liabilities,Long-term provisions,0,450000,0,100000
+220100,Working capital demand loan,Liabilities,Short-term borrowings,0,2000000,0,1800000
+220200,Trade payables — MSME and others,Liabilities,Trade payables,0,4500000,0,3200000
+220300,Statutory dues and accrued expenses,Liabilities,Other current liabilities,0,1000000,0,400000
+220400,Provision for warranty,Liabilities,Short-term provisions,0,500000,0,200000
+220500,Provision for current tax,Liabilities,Current tax liabilities,0,300000,0,100000
+300100,Revenue from sale of manufactured goods,Income,Revenue from operations,0,48000000,0,42000000
+300200,Interest and miscellaneous income,Income,Other income,0,800000,0,500000
+400100,Raw materials consumed,Expenses,Materials,28000000,0,24800000,0
+400200,Salaries wages and staff welfare,Expenses,Employee benefits,7000000,0,6200000,0
+400300,Manufacturing selling and administration,Expenses,Other expenses,5000000,0,4500000,0
+400400,Depreciation and amortisation,Expenses,Depreciation,1500000,0,1300000,0
+400500,Interest on borrowings,Expenses,Finance costs,1000000,0,900000,0
+400600,Current tax expense,Expenses,Tax,1500000,0,1200000,0
+400700,Deferred tax expense,Expenses,Tax,300000,0,200000,0

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">White Horse</title>
+  <desc id="desc">A white horse head within a deep green rounded square.</desc>
+  <rect width="512" height="512" rx="112" fill="#102b2a"/>
+  <path fill="#f6f1e5" d="M355 107c-28 13-50 33-66 58-39-20-80-19-118 5 31 5 57 18 77 40-34 11-61 34-81 68-19 33-25 70-20 111h69c-1-32 7-58 25-78 11 27 31 48 60 63 27 14 56 19 87 15 3-27-3-50-18-69-10-13-24-22-41-29 31-8 53-28 66-59 11-27 12-55 3-84-9 21-22 37-40 48 7-39 6-75-3-109Zm-42 103c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20Z"/>
+  <path fill="#c89a4b" d="M157 405h233v22H157z"/>
+</svg>
