@@ -2,7 +2,7 @@
 
 ## What stays in the browser
 
-White Horse has no application backend. Imported Trial Balance contents, mappings, adjustments, notes, validations, users, and audit events are stored in IndexedDB for the current site origin and browser profile. File parsing, accounting calculations, and report generation occur in the browser.
+White Horse has no application backend. Imported Trial Balance contents, mappings, adjustments, notes, validations, users, optional signing-block data, and audit events are stored in IndexedDB for the current site origin and browser profile. Signing-block data can include a Director's name/designation/DIN and a Chartered Accountant's name, firm, FRN, membership number, optional UDIN, place, and signing date. File parsing, accounting calculations, and report generation occur in the browser.
 
 The application does not include analytics, advertising, or telemetry SDKs.
 
@@ -20,7 +20,7 @@ GitHub Pages serves the static HTML, JavaScript, CSS, manifest, icon, and servic
 
 ## User-controlled exports
 
-CSV, XLSX, print/PDF, and backup files leave browser storage only when the user explicitly generates or selects them. Plain JSON backups are readable. Encrypted `.whbackup` files use a user-supplied passphrase with PBKDF2-derived AES-GCM encryption; losing the passphrase makes recovery impractical.
+CSV, XLSX, print/PDF, and backup files leave browser storage only when the user explicitly generates or selects them. Enabled signing identifiers are included in printed/PDF reports and all saved signing settings are included in backups. Plain JSON backups are readable. Encrypted `.whbackup` files use a user-supplied passphrase with PBKDF2-derived AES-GCM encryption; losing the passphrase makes recovery impractical.
 
 ## Public demonstration rule
 

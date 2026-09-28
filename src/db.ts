@@ -16,6 +16,10 @@ import { createDivisionINoteTemplates } from './data/noteTemplates';
 import { RULESET_VERSION, TAXONOMY_VERSION, taxonomyByCode } from './data/taxonomy';
 import { hashRecord } from './domain/security';
 import {
+  assertValidStatementSignatureSettings,
+  normaliseStatementSignatureSettings
+} from './domain/signatureSettings';
+import {
   assertValidCompanyWorkspaceInput,
   type CompanyWorkspaceInput
 } from './domain/companyValidation';
@@ -29,6 +33,7 @@ import type {
   LocalUser,
   NoteDisclosure,
   ReportingPeriod,
+  StatementSignatureSettings,
   TrialBalanceImport,
   ValidationResult,
   WorkspaceData
@@ -329,6 +334,33 @@ export async function updateCompanyWorkspace(companyId: string, periodId: string
       materialityPaise: input.materialityPaise,
       updatedAt: now
     });
+    await db.auditEvents.add(event);
+  });
+}
+
+export async function updateStatementSignatureSettings(
+  companyId: string,
+  periodId: string,
+  settings: StatementSignatureSettings
+): Promise<void> {
+  const [company, period] = await Promise.all([db.companies.get(companyId), db.periods.get(periodId)]);
+  if (!company || !period || period.companyId !== company.id) throw new Error('Company reporting period was not found.');
+  if (period.status === 'FINALISED') throw new Error('Reopen the reporting period before changing its signing blocks.');
+  const normalised = normaliseStatementSignatureSettings(settings);
+  assertValidStatementSignatureSettings(normalised, period.endDate);
+  const now = new Date().toISOString();
+  const event = await nextAuditEvent({
+    companyId,
+    periodId,
+    actorId: 'demo-preparer',
+    actorRole: 'PREPARER',
+    action: 'STATEMENT_SIGNATURE_SETTINGS_UPDATED',
+    entityType: 'REPORTING_PERIOD',
+    entityId: periodId,
+    reason: `Updated PDF signing blocks: Director ${normalised.showDirector ? 'shown' : 'hidden'}, Chartered Accountant ${normalised.showCharteredAccountant ? 'shown' : 'hidden'}.`
+  });
+  await db.transaction('rw', db.periods, db.auditEvents, async () => {
+    await db.periods.update(periodId, { signatureSettings: normalised, updatedAt: now });
     await db.auditEvents.add(event);
   });
 }

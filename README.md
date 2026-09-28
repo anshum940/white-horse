@@ -8,8 +8,8 @@ White Horse is a local-first, multi-company financial-statement preparation work
 
 ## What it demonstrates
 
-- CSV/XLSX Trial Balance preview, validation, versioned activation, and source-row traceability
-- A vendor-neutral, eight-column Standard TB template (`WH-TB-1.0`) in CSV and XLSX
+- Adaptive XLSX/CSV/TSV/TXT Trial Balance preview, worksheet/header detection, manual column mapping, validation, versioned activation, and source-row traceability
+- A vendor-neutral, eight-column Standard TB template (`WH-TB-1.0`) in CSV and XLSX for the most repeatable import path
 - Independent company workspaces, reporting periods, materiality settings, display scales, and local role records
 - 21-character CIN format controls, non-overlapping comparative periods, and current financial-year defaults
 - Ledger-to-taxonomy mapping with current/non-current and cash-flow classifications
@@ -17,10 +17,16 @@ White Horse is a local-first, multi-company financial-statement preparation work
 - Deterministic Balance Sheet, Profit and Loss, and indirect Cash Flow statements
 - Thirty structured notes/disclosure workpapers and twelve transparent analytical ratios
 - Comparative notes, review rules, finalisation gates, and hash-linked audit events
-- One-click 11-sheet Excel pack, CSV extracts, print/PDF, plain backup, and PBKDF2/AES-GCM encrypted backup flows
+- One-click 11-sheet Excel pack, CSV extracts, a six-section A4 browser PDF pack, optional Director/CA signing blocks, plain backup, and PBKDF2/AES-GCM encrypted backup flows
 - IndexedDB persistence and a service-worker application shell for offline use
 
-## Standard Trial Balance format
+## Trial Balance import
+
+White Horse first attempts to understand the accounting export directly. It scans candidate worksheets and the first 50 rows for a probable table header, while excluding clearly named instruction/example/sample sheets from automatic selection, recognises common account/ledger aliases, supports one-row and two-tier headers, and handles separate debit/credit columns, opening-plus-movement layouts, signed balances, and Dr/Cr indicators. If a vendor uses unknown headings, **Review mapping** lets the preparer assign the columns without changing the source file. A ledger code is optional; White Horse generates a source-row code and warns the preparer when one is absent.
+
+Accepted tabular files are `.xlsx`, `.csv`, `.tsv`, and delimited `.txt`. Scanned PDFs, legacy binary `.xls`, password-protected/corrupt workbooks, macros, and proprietary accounting database files are not silently interpreted. Convert those to a tabular export first. White Horse never guesses whether an unsigned balance is debit-positive or credit-positive; the preparer must select that convention.
+
+For controlled and repeatable onboarding, the preferred `WH-TB-1.0` format uses these headers on row 1:
 
 Use these exact headers on row 1, in this order:
 
@@ -28,7 +34,7 @@ Use these exact headers on row 1, in this order:
 Ledger Code, Ledger Name, Group, Subgroup, Closing Debit, Closing Credit, Previous Debit, Previous Credit
 ```
 
-Amounts must be positive values in INR, not lakhs or crores. Put each balance on either the debit or credit side, never both. Closing debits must equal closing credits exactly. Do not include title rows, group totals, subtotals, formulas, macros, or merged cells. Download [the source-controlled CSV template](samples/white-horse-tb-template.csv) or read the complete [Trial Balance import specification](docs/TRIAL_BALANCE_IMPORT_FORMAT.md). The application provides both downloads from **Trial Balance → Standard TB template**; the XLSX keeps the blank import sheet separate from its instructions and worked example.
+Amounts must be in INR, not lakhs or crores, and closing debits must equal closing credits exactly. The adaptive importer skips blank/title rows and exact total rows, but the preview and totals must still be reviewed before activation. Download [the source-controlled CSV template](samples/white-horse-tb-template.csv) or read the complete [Trial Balance import specification](docs/TRIAL_BALANCE_IMPORT_FORMAT.md). The application provides both downloads from **Trial Balance → Standard TB template**; the XLSX keeps the blank import sheet separate from its instructions and worked example.
 
 ## Data and privacy model
 
@@ -69,12 +75,12 @@ npm run preview
 ## Study demo flow
 
 1. Open **Company setup** to show the legal identity, period, framework, local roles, and the new-company workflow.
-2. Open **Trial Balance → Standard TB template** to download the vendor-neutral CSV/XLSX format, then copy in the ledger-level export from the accounting package.
+2. Open **Trial Balance → Import Trial Balance** and upload a ledger-level `.xlsx`, `.csv`, `.tsv`, or delimited `.txt` export. Review the detected worksheet/header and use the mapper when headings are ambiguous. The standard CSV/XLSX template remains available as a controlled fallback.
 3. Preview [the synthetic CSV](samples/saffron-trial-balance.csv). Do not activate it unless you intend to create a new local import version.
 4. Review mapping status and posted/submitted adjustments.
 5. Open **Review & validation** to run deterministic controls and inspect evidence.
 6. Open **Financial statements**, switch among statements, and select a line for ledger drill-down.
-7. Select **Generate complete financials** to download the 11-sheet working-paper pack.
+7. Use **PDF & signatures** to configure optional Director/DIN and CA/membership text blocks for the reporting period. Select **Export PDF**, then choose **Save as PDF** in the browser print dialog, or select **Generate complete financials** for the 11-sheet working-paper pack.
 8. Open **Finalisation** to demonstrate the unresolved-matter gate and encrypted backup.
 
 ## Documentation

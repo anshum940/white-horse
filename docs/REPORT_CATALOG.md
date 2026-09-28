@@ -115,27 +115,33 @@ The current release provides 30 structured note workpapers, mapped current/compa
 
 Generation is blocked if no Trial Balance is active or any active ledger is unmapped. The ratio sheet contains 12 transparent calculations. DSCR remains `N/A` until principal-repayment data is available.
 
-## 7. Trial Balance import/export format
+## 7. Complete browser PDF pack
 
-The prescribed import columns are:
+**Export PDF** opens the browser print dialog for an A4 pack containing a cover, Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, and analytical ratio schedule. The user chooses **Save as PDF** and reviews the resulting file. Browser print was selected to keep generation local, standards-based, accessible, and dependency-light; pixel-identical output across browser engines is not guaranteed.
+
+Each face statement can show an optional Director block at lower left and Chartered Accountant block at lower right. The settings belong to the reporting period and each block can be hidden independently. The output is an unsigned text/signature-line placeholder, not a handwritten/electronic/digital signature or an auditor's report.
+
+## 8. Trial Balance import/export format
+
+The preferred repeatable `WH-TB-1.0` columns are:
 
 ```text
 Ledger Code, Ledger Name, Group, Subgroup, Closing Debit, Closing Credit, Previous Debit, Previous Credit
 ```
 
-Values are positive INR amounts. One closing side is populated per ledger, and total closing debits must equal total closing credits. See `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` for the complete schema and supported aliases.
+Values are INR amounts. One closing side is populated per ledger, and total closing debits must equal total closing credits. The adaptive importer also accepts XLSX/CSV/TSV/delimited TXT vendor exports, scans worksheets/header rows, recognises separate and signed balance layouts, and exposes a manual semantic column mapper when detection is ambiguous. See `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` for the complete layouts, limits, aliases, and review controls.
 
-## 8. Export formats
+## 9. Export formats
 
 | Format | Use | Implementation rule |
 | --- | --- | --- |
-| Print/PDF | Board, bank, statutory-oriented presentation | Dedicated print CSS; user prints to PDF; repeat headers and avoid clipped tables |
+| Print/PDF | Complete financial statement pack | Six-section A4 print pack; browser **Save as PDF**; optional unsigned Director/CA text blocks; repeat headers and avoid clipped tables |
 | XLSX | Working papers and editable schedules | Separate sheets, formulas only where safe, values and control totals, freeze panes, filters, styles |
 | CSV | TB, mapping, adjustment, validation, audit extracts | UTF-8 with BOM option; explicit column schema and ISO dates |
 | JSON backup | Full-fidelity backup/restore | Versioned manifest, integrity hash, optional authenticated encryption |
 | HTML in-app | Drill-down and review | Accessible tables, provenance links, no raw imported HTML |
 
-## 9. Naming convention
+## 10. Naming convention
 
 ```text
 WhiteHorse_<CompanyCode>_<PeriodEnd>_<ReportType>_<Status>_v<Revision>_<YYYYMMDD-HHmm>.<ext>

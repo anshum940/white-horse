@@ -30,8 +30,14 @@ describe('prescribed Trial Balance template', () => {
     const workbook = await readFile(join(process.cwd(), 'public', 'templates', 'White_Horse_Standard_TB_Import.xlsx'));
     const sheets = await readXlsxFile(workbook);
     const importRows = await readSheet(workbook, 1);
+    const preview = await parseTrialBalanceFile(new File([new Uint8Array(workbook)], 'White_Horse_Standard_TB_Import.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    }));
 
     expect(sheets.map((sheet) => sheet.sheet)).toEqual(['Trial Balance Import', 'Instructions', 'Worked Example']);
     expect(importRows).toEqual([trialBalanceTemplateColumns.map((column) => column.name)]);
+    expect(preview.selectedWorksheet).toBe('Trial Balance Import');
+    expect(preview.rows).toEqual([]);
+    expect(preview.errors).toContain('No ledger rows with balances were found below the selected header.');
   });
 });

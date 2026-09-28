@@ -117,7 +117,7 @@ export function StatementTable({
           {lines.map((line) => (
             <tr key={line.code} className={`statement-${line.kind.toLowerCase()}`}>
               <td>
-                {line.kind === 'LINE' || line.kind === 'CALCULATED' ? (
+                {(line.kind === 'LINE' || line.kind === 'CALCULATED') && onDrilldown ? (
                   <button className="drilldown-button" onClick={() => onDrilldown?.(line)} disabled={!line.ledgerIds.length}>
                     <span>{line.label}</span>
                     {line.ledgerIds.length > 0 && <Icon name="chevron" size={14} />}

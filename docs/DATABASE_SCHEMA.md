@@ -56,7 +56,9 @@ Fields: `id`, `legalName`, `tradeName`, `cin`, `panMasked`, `registeredOffice`, 
 
 Primary key: `id`; compound unique key enforced in service: `(companyId, startDate, endDate, revision)`; indexes: `companyId`, `[companyId+status]`, `endDate`.
 
-Fields: `id`, `companyId`, `label`, `startDate`, `endDate`, `comparativePeriodId`, `framework`, `taxonomyVersion`, `status`, `revision`, `materialityPaise`, `roundingPolicy`, `mappingVersionId`, `activeImportId`, `finalisedSnapshotId`, `createdAt`, `updatedAt`, `finalisedAt`, `finalisedBy`.
+Fields: `id`, `companyId`, `label`, `startDate`, `endDate`, `comparativePeriodId`, `framework`, `taxonomyVersion`, `status`, `revision`, `materialityPaise`, `roundingPolicy`, `mappingVersionId`, `activeImportId`, `signatureSettings`, `finalisedSnapshotId`, `createdAt`, `updatedAt`, `finalisedAt`, `finalisedBy`.
+
+`signatureSettings` is optional period-level metadata because signatories and signing dates can change between reporting periods. It contains independent Director/CA visibility flags; Director name, designation and DIN; CA capacity, firm, optional FRN, signing name, designation, ICAI membership number and optional UDIN; and common place/date. Updates are validated, audited, and rejected after finalisation. The fields render an unsigned text block and signature line; no handwritten, electronic, or digital signature is stored.
 
 ### 3.5 `tbImports`
 

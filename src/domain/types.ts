@@ -46,6 +46,25 @@ export interface CashFlowInputs {
   dividendsPaid: Money;
 }
 
+export type CharteredAccountantCapacity = 'PREPARER' | 'COMPILER' | 'STATUTORY_AUDITOR';
+
+export interface StatementSignatureSettings {
+  showDirector: boolean;
+  directorName: string;
+  directorDesignation: string;
+  directorDin: string;
+  showCharteredAccountant: boolean;
+  caCapacity: CharteredAccountantCapacity;
+  caFirmName: string;
+  caFirmRegistrationNumber: string;
+  caName: string;
+  caDesignation: string;
+  caMembershipNumber: string;
+  caUdin: string;
+  place: string;
+  signingDate: string;
+}
+
 export interface ReportingPeriod {
   id: Id;
   companyId: Id;
@@ -68,6 +87,7 @@ export interface ReportingPeriod {
     financing: Money;
     openingCash: Money;
   };
+  signatureSettings?: StatementSignatureSettings;
   createdAt: string;
   updatedAt: string;
 }

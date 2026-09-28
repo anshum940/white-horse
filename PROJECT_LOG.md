@@ -1071,3 +1071,210 @@ Console issues:      0
 ```
 
 The public release is available at https://anshum940.github.io/white-horse/. This deployment record will be saved in a documentation-only `[skip ci]` follow-up commit to avoid running and redeploying the unchanged application a second time.
+
+## 28 September 2026 — Adaptive Trial Balance import and signed PDF pack
+
+### Objective and user requirement
+
+The user requested three connected improvements:
+
+1. Import Trial Balances from differing accounting-software layouts without leaving the user at a persistent “format not recognised” error.
+2. Add a PDF export for the financial-statement pack.
+3. Add optional, company-specific signing blocks with a Director at the lower left (including DIN) and a Chartered Accountant at the lower right (including membership number), with independent show/hide controls.
+
+“Any format” is being implemented as a safe adaptive import for tabular `.xlsx`, `.csv`, `.tsv`, and delimited `.txt` files: worksheet and header-row discovery, broad but explicit field aliases, support for debit/credit pairs and signed-balance plus Dr/Cr-indicator layouts, generated ledger codes when the source has names but no codes, and an explicit column-mapping fallback where an export is ambiguous. White Horse will not silently guess an uncertain balance direction and will not claim to parse scanned PDFs, legacy binary `.xls`, password-protected workbooks, macro formats, corrupt files, or arbitrary proprietary binary formats.
+
+### Skills and governing workflow
+
+The spreadsheet workflow is being used for the multi-layout importer and the PDF workflow for a verified print/PDF financial pack. The spreadsheet instructions, existing-file workflow, API quick start, style rules, and financial-model guidance were read before implementation. The PDF instructions were read before work on export behaviour. This task changes application code rather than directly authoring a standalone workbook, so the spreadsheet artifact-operation marker is not applicable unless a workbook deliverable is subsequently created or edited through the artifact runtime.
+
+### Initial code and repository inspection
+
+The working tree began clean and synchronized:
+
+```text
+## main...origin/main
+```
+
+Relevant commands executed:
+
+```powershell
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project status --short --branch
+Get-ChildItem -Force
+rg --files src
+rg -n --hidden -S "trialBalance|Trial Balance|window\.print|PDF|pdf|signature|director|DIN|membership|Company|read-excel-file|xlsx|CSV|csv" src package.json PROJECT_LOG.md
+Get-Content -Raw src\services\trialBalanceImport.ts
+Get-Content -Raw src\pages\TrialBalancePage.tsx
+Get-Content -Raw src\pages\StatementsPage.tsx
+Get-Content -Raw src\pages\ReportsPage.tsx
+Get-Content -Raw src\domain\types.ts
+Get-Content -Raw src\db.ts
+Get-Content -Raw src\services\backup.ts
+Get-Content -Raw src\services\excelExport.ts
+Get-Content -Raw src\services\trialBalanceImport.test.ts
+Get-Content -Raw node_modules\read-excel-file\README.md
+```
+
+The first broad `rg` used the Unix-style glob operand `vite.config.*`, which PowerShell passed as a literal invalid Windows filename and reported `os error 123`. This did not affect the repository. Later queries use explicit filenames or `--glob` options.
+
+### Confirmed root causes in the current importer
+
+- XLSX processing calls `readSheet(file)`, which reads the first worksheet only.
+- The parser hardcodes row 1 as the header.
+- Ledger code and ledger name are both mandatory; a common name-only accounting export is rejected.
+- Only a small set of exact normalized aliases is recognised.
+- The parser handles separate closing debit/credit columns or opening plus debit/credit movements, but not a signed balance column, an adjacent Dr/Cr indicator, or values such as `1,000.00 Dr`.
+- The UI has no worksheet/header/column mapping fallback. It therefore instructs users to copy into the White Horse template even when the source is otherwise usable.
+- The old error is correctly cleared before a new file is parsed, but users cannot correct an ambiguous layout in the same import session.
+
+The installed `read-excel-file` 9.3.10 documentation confirms that its default browser export returns every worksheet as `{ sheet, data }`; the named `readSheet` helper intentionally returns one worksheet. The adaptive reader will use the documented all-sheets API rather than relying on private package internals.
+
+### Existing PDF and persistence findings
+
+- Financial Statements already exposes a `Print / PDF` button backed by `window.print()`, but it prints only the currently selected face statement and contains no signing configuration.
+- The report page also uses the browser print dialog for its current preview.
+- Existing print CSS correctly establishes A4 output but only exposes `.paper-sheet` or the report preview.
+- Company data is stored in IndexedDB through Dexie and included in White Horse backup/restore. Optional signature metadata is stored on the reporting-period record, because signatories, signing dates and UDINs can differ by year. This requires no new table or indexed key; old records and schema-version-1 backups remain structurally compatible because the field is optional and defaults are applied at read/render time.
+
+### Official-source research and legal presentation decision
+
+- Companies Act, 2013, section 134(1), as published by MCA, states that financial statements are approved by the Board before being signed on behalf of the Board by the authorised chairperson or by two directors (one being the managing director, if any), along with the CEO, CFO and company secretary wherever appointed; an OPC uses one director. Section 134(2) says the auditor’s report is attached to every financial statement. Source: https://www.mca.gov.in/bin/ebook/dms/getdocument?doc=NTk2MQ%3D%3D&docCategory=Acts&type=open
+- ICAI states that UDIN is placed immediately after the membership number when signing audit reports. ICAI’s current FAQ also distinguishes the financial statements from the audit report and says UDIN is required on the audit report, not additionally on the financial statements. Sources: https://icai.org/post/15671 and https://www.udin.icai.org/pdf/FAQs%20on%20UDIN%20%285th%20Edition%29.pdf
+- MDN documents that `window.print()` opens the browser print dialog and that `@media print` / `@page` are the standard web mechanisms for a page formatted for paper or PDF. Sources: https://developer.mozilla.org/en-US/docs/Web/API/Window/print and https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Media_queries/Printing
+
+Accordingly, the UI will not present a single Director field as if it always satisfies section 134, and it will not describe the CA block as a statutory auditor signature unless the user selects that role. The first implementation will provide configurable presentation/signing placeholders and identity metadata, not a stored image of a handwritten signature and not an electronic/digital signature. The output will carry a clear draft/preparation warning unless the reporting period is finalised.
+
+### Planned implementation and verification
+
+1. Replace the narrow parser with a deterministic adaptive detector and explicit import mapping model.
+2. Add worksheet/header selection and column-role mapping to the import modal; prevent activation until required roles and exact TB balance checks pass.
+3. Add targeted unit tests for title rows, later worksheets, name-only files, debit/credit pairs, signed balance with Dr/Cr, parenthesised/Indian-formatted values, totals exclusion, duplicates and manual override mappings.
+4. Add optional reporting-period signing configuration, independent show/hide controls and audited updates.
+5. Add a full print/PDF pack containing Balance Sheet, Profit and Loss, Cash Flow, notes and the ratio schedule, followed by the selected signing blocks.
+6. Verify type-check, tests, production build, dependency audit, browser import flows, PDF print layout, IndexedDB persistence and backup compatibility before any Git commit or public deployment.
+
+### Implementation completed
+
+#### Adaptive Trial Balance parser
+
+`src/services/trialBalanceImport.ts` was replaced with a typed, deterministic import pipeline. It now:
+
+- accepts `.xlsx`, `.csv`, `.tsv`, and delimited `.txt` files;
+- detects comma, tab, semicolon, and pipe delimiters;
+- reads all XLSX worksheets and enforces a 200,000-row workbook inspection limit;
+- scores the first 50 rows of each worksheet as one-row and two-tier header candidates;
+- exposes the selected worksheet, header row/depth, confidence, available columns, semantic mapping, and sample values in the preview;
+- recognises broad explicit aliases for ledger/account identity, groups, opening balances, period movements, closing balances, comparative balances, and Dr/Cr indicators;
+- supports separate closing debit/credit, opening plus movements, signed balances with `DR`/`CR` suffixes, and signed balances with a separate direction column;
+- requires an explicit debit-positive or credit-positive convention when a signed value has no directional evidence;
+- makes ledger code optional and generates `AUTO-<source-row>` codes with a visible warning;
+- skips blank/title/narration rows without balances and excludes exact Total/Grand Total/Control Total/Net Total rows;
+- converts all monetary values to integer paise, validates safe-integer limits, blocks duplicate codes/both-sides balances, and requires exact debit/credit equality before activation; and
+- records selected worksheet/header metadata in the immutable import audit event.
+
+`src/pages/TrialBalancePage.tsx` now keeps the selected file in memory for the session and provides worksheet selection, header-row/depth correction, 16 semantic role selectors, signed-balance convention selection, re-detection, re-validation, detected samples, and the statuses `STANDARD FORMAT`, `ADAPTIVE IMPORT READY`, `MAPPING REQUIRED`, and `IMPORT BLOCKED`. Selecting another file clears the previous preview/errors, and selecting the same filename again works because the file input is reset.
+
+The standard `WH-TB-1.0` templates remain available as the preferred repeatable onboarding format, but they are no longer a forced prerequisite for a compatible direct accounting export.
+
+#### Signing controls and PDF pack
+
+- Added optional `StatementSignatureSettings` to `ReportingPeriod`, rather than Company, so each financial year can have different signatories, dates and UDIN.
+- Added central validation/normalisation for independent visibility toggles, required names/designations, eight-digit DIN syntax, six-digit ICAI membership-number syntax, optional 18-character UDIN syntax, place/date, field lengths, and signing-date chronology. These checks validate syntax only; they do not query MCA or ICAI records.
+- Added `updateStatementSignatureSettings` as an audited IndexedDB write. Finalised periods reject changes.
+- Added **PDF & signatures** in Financial Statements. Director fields render at lower left; CA capacity/firm/signing person/membership fields render at lower right. FRN and UDIN are optional. Each side can be hidden independently.
+- Signing output is deliberately an unsigned text block and signature line. No handwritten image, electronic signature, digital certificate, or auditor’s report is stored or created.
+- Added a print-only six-section A4 pack: cover, Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, and analytical ratio schedule. Long sections may paginate naturally. **Export PDF** calls the standards-based browser print dialog; the user chooses **Save as PDF**.
+- Printed statement rows are plain text rather than inert drill-down buttons. The ratio page is a flex column so its end-of-pack footer remains anchored at the page bottom.
+
+#### Tests added or extended
+
+`src/services/trialBalanceImport.test.ts` now covers 11 import scenarios: quoted comparative CSV, unbalanced TB, name-only direct export with generated codes, a later workbook worksheet plus title rows, two-tier headers, Dr/Cr suffixes, required unsigned convention, separate Dr/Cr indicator, semicolon delimiter, manual mapping, and taxonomy suggestion. The existing real XLSX template test continues to pass with the all-sheet reader.
+
+`src/domain/signatureSettings.test.ts` covers hidden blocks, valid normalisation, missing required fields, invalid DIN/membership/UDIN, and signing date before period end. `src/db.test.ts` verifies persistence across IndexedDB reopen and the signature-settings audit event. `src/components/FinancialPdfPack.test.tsx` verifies all statements, notes, ratios, Director/DIN, and CA/membership in the rendered pack.
+
+### Automated verification and encountered errors
+
+```powershell
+npm run typecheck
+# passed
+
+npm test
+# pre-final-review run: 15 test files, 46/46 tests passed
+
+npm run build
+# passed with Vite 8.3.1; 186 modules
+# CSS 56.09 kB / 11.14 kB gzip
+# TrialBalance chunk 39.12 kB / 11.89 kB gzip
+# Statements chunk 21.19 kB / 5.10 kB gzip
+# entry 406.34 kB / 124.88 kB gzip
+# PWA precache 25 entries / 721.56 KiB
+```
+
+Two importer tests initially failed:
+
+1. The two-tier fixture’s second header row independently formed a valid single-row layout, so the scoring algorithm correctly selected depth one. The fixture was corrected so the parent row is necessary to derive the semantic label.
+2. `GL Account` and generic `Amount` were not yet in the explicit alias table. They were added; the latter still requires Dr/Cr evidence or an explicit sign convention.
+
+Both were fixture/coverage discoveries, not relaxed validation. The complete suite passed afterward.
+
+Final code review found a further safety edge case: because all worksheets are scored, the populated `Worked Example` in the downloadable standard workbook could outrank its intentionally blank `Trial Balance Import` sheet on numeric evidence. Automatic detection now excludes worksheets clearly named Instructions, Read Me, Guide, Worked Example, Example, or Sample whenever another candidate sheet exists; the user can still select one explicitly. A regression test covers this synthetic-data isolation and the real distributed XLSX is now parsed end-to-end to prove the blank import sheet is selected. This increases the final suite to 47 tests.
+
+### Production-bundle browser QA
+
+The production bundle was served locally at `http://127.0.0.1:4183/white-horse/`. A semicolon-delimited synthetic export containing two title rows, name-only ledgers, `Debit Amount`/`Credit Amount`, and a duplicate Total row was uploaded through the real UI. The importer reported:
+
+```text
+Status:        ADAPTIVE IMPORT READY
+Worksheet:     Delimited import
+Header:        Row 3
+Confidence:    HIGH
+Ledger rows:   2
+Debit:         ₹1,000
+Credit:        ₹1,000
+Difference:    0
+Warnings:      generated ledger codes; one Total row excluded; no comparative columns
+```
+
+A second export used wholly unknown headings `Vendor Field A/B/C`. The UI correctly showed `MAPPING REQUIRED`. Mapping Field A to Ledger Name, Field B to Closing Debit, and Field C to Closing Credit changed the same session to `ADAPTIVE IMPORT READY`, with two rows and exact balanced totals. Neither synthetic import was activated, so the demonstration company’s active TB remained unchanged.
+
+Browser automation exposed two harness-specific issues:
+
+- Chrome file upload was blocked because the installed browser extension did not have local-file URL access. The same authorised local upload was completed through the Codex in-app browser; no Chrome setting was changed.
+- The in-app browser’s high-level Playwright button click did not fire some React click handlers, although file-input and field interactions worked. Visible accessibility/coordinate controls were used for those buttons. This was an automation-adapter limitation; the controls worked through real UI activation and browser console errors/warnings remained zero.
+
+The signature form was then tested with synthetic local values: Director `Asha Rao`, DIN `12345678`, preparer firm `Rao & Co.`, signing CA `Vikram Rao`, and membership `123456`. Saving displayed the Director at the statement’s lower left and the CA at lower right. A full reload retained both blocks, confirming IndexedDB persistence. Read-only DOM inspection confirmed six print sections and the presence of Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, analytical ratio schedule, and both signature identifiers. The print pack remains hidden on screen and is exposed only by print media. Browser console issues: zero.
+
+### Documentation synchronisation
+
+Updated `README.md`, `docs/TRIAL_BALANCE_IMPORT_FORMAT.md`, `docs/USER_GUIDE.md`, `docs/DATABASE_SCHEMA.md`, `docs/REPORT_CATALOG.md`, `docs/FUNCTIONAL_ARCHITECTURE.md`, `PRIVACY.md`, and `SECURITY.md` to document the adaptive-import boundary, manual mapping, standards-based PDF workflow, reporting-period signature metadata, privacy implications, and the explicit limitation that the blocks are not signatures or an auditor’s report.
+
+### Final local release gate
+
+After the worked-example safeguard and documentation updates, the complete gate was rerun:
+
+```powershell
+npm run typecheck
+# passed
+
+npm test
+# 15 test files, 47/47 tests passed
+
+npm run build
+# passed; Vite 8.3.1; 186 modules
+# CSS 56.14 kB / 11.14 kB gzip
+# TrialBalance chunk 39.25 kB / 11.95 kB gzip
+# Statements chunk 21.19 kB / 5.10 kB gzip
+# entry 406.34 kB / 124.88 kB gzip
+# PWA precache 25 entries / 721.73 KiB
+
+npm audit --audit-level=moderate
+# restricted attempt could not reach the official npm audit endpoint or write its host cache log
+# approved official-registry retry: found 0 vulnerabilities
+
+git diff --check
+# passed
+```
+
+A focused repository scan found no AWS access-key identifiers, GitHub token patterns, private-key blocks, or the user’s personal email address. Git identity is `Anshum <105625445+anshum940@users.noreply.github.com>` and the only remote is `https://github.com/anshum940/white-horse.git`.
+
+The first staging attempt could not create `.git/index.lock` because the managed workspace grants normal write access to project files but not the Git metadata directory. No files were staged by that attempt. The approved repository-scoped Git retry succeeded; `git diff --cached --check` passed and the staged set contains only the 24 reviewed source, test, and documentation files for this release.

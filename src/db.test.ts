@@ -5,8 +5,10 @@ import {
   initializeDatabase,
   listCompanyWorkspaces,
   loadWorkspace,
+  updateStatementSignatureSettings,
   type CompanyWorkspaceInput
 } from './db';
+import { defaultStatementSignatureSettings } from './domain/signatureSettings';
 
 const input = (): CompanyWorkspaceInput => ({
   legalName: 'Persistence Test Private Limited',
@@ -62,5 +64,31 @@ describe('company workspace database controls', () => {
       company: { cin: 'U62010DL2026PTC654321' },
       period: { startDate: '2026-04-01', endDate: '2027-03-31' }
     });
+  });
+
+  it('stores validated signing blocks on the selected reporting period with an audit event', async () => {
+    const companyId = await createCompanyWorkspace(input());
+    const workspace = await loadWorkspace(companyId);
+    expect(workspace).toBeDefined();
+    if (!workspace) return;
+    await updateStatementSignatureSettings(companyId, workspace.period.id, {
+      ...defaultStatementSignatureSettings(workspace.period.endDate, workspace.company.registeredOffice),
+      showDirector: true,
+      directorName: 'Asha Rao',
+      directorDin: '12345678',
+      showCharteredAccountant: true,
+      caFirmName: 'Rao & Co.',
+      caName: 'Vikram Rao',
+      caMembershipNumber: '123456',
+      place: 'New Delhi'
+    });
+    const reloaded = await loadWorkspace(companyId);
+    expect(reloaded?.period.signatureSettings).toMatchObject({
+      showDirector: true,
+      directorDin: '12345678',
+      showCharteredAccountant: true,
+      caMembershipNumber: '123456'
+    });
+    expect(reloaded?.auditEvents.at(-1)?.action).toBe('STATEMENT_SIGNATURE_SETTINGS_UPDATED');
   });
 });

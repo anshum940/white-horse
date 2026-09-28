@@ -136,8 +136,10 @@ No state transition deletes history. Replacing an import, mapping, or report cre
 
 ### 7.3 Trial Balance
 
-- Import wizard for `.csv` and `.xlsx`.
-- Column mapping and date/number format preview.
+- Adaptive import wizard for `.xlsx`, `.csv`, `.tsv`, and delimited `.txt`.
+- Multi-worksheet and first-50-row header scanning with automatic instruction/example-sheet exclusion, one/two-tier headers, common aliases, separate debit/credit layouts, opening-plus-movement layouts, signed balances, and Dr/Cr indicators.
+- Explicit worksheet/header override and semantic column mapper; ambiguous unsigned balances require a user-selected sign convention rather than a guess.
+- Preferred vendor-neutral `WH-TB-1.0` CSV/XLSX template for repeatable onboarding.
 - Manual paste grid and manual ledger entry.
 - Import staging, validation results, duplicate handling, and reconciliation.
 - Version comparison and import replacement with explicit reason.
@@ -193,7 +195,8 @@ No state transition deletes history. Replacing an import, mapping, or report cre
 - Pre-finalisation checklist.
 - Reviewer approval and period lock.
 - Snapshot hash and report-run identifier.
-- Print/PDF, spreadsheet workbook, CSV schedules, and JSON backup.
+- Six-section A4 browser print/PDF pack, spreadsheet workbook, CSV schedules, and JSON backup.
+- Optional period-level Director/DIN block at lower left and CA/membership block at lower right of each face statement, independently visible and explicitly unsigned.
 - Export manifest listing versions, rounding, generated time, preparer/reviewer, unresolved non-blocking warnings, and hashes.
 
 ### 7.11 Administration
