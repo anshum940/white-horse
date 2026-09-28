@@ -1278,3 +1278,84 @@ git diff --check
 A focused repository scan found no AWS access-key identifiers, GitHub token patterns, private-key blocks, or the user’s personal email address. Git identity is `Anshum <105625445+anshum940@users.noreply.github.com>` and the only remote is `https://github.com/anshum940/white-horse.git`.
 
 The first staging attempt could not create `.git/index.lock` because the managed workspace grants normal write access to project files but not the Git metadata directory. No files were staged by that attempt. The approved repository-scoped Git retry succeeded; `git diff --cached --check` passed and the staged set contains only the 24 reviewed source, test, and documentation files for this release.
+
+### Release completion, GitHub authentication and public deployment
+
+The reviewed release was committed locally as:
+
+```text
+fe0cbff feat: add adaptive TB import and signed PDF pack
+24 files changed, 1705 insertions(+), 325 deletions(-)
+```
+
+The first fresh GitHub CLI device-login attempt reached GitHub's additional account-verification step but expired before that private verification was completed. It did not push or change the repository. A second fresh device flow was then completed by the user in the browser. Ephemeral device and verification codes are intentionally not stored in this project log.
+
+Before the authenticated operation, identity and repository targeting were revalidated:
+
+```powershell
+gh auth status --hostname github.com
+gh api user --jq '{login: .login, id: .id}'
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project config user.name
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project config user.email
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project remote -v
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project status --short --branch
+```
+
+Verified results:
+
+```text
+Active GitHub account: anshum940
+GitHub numeric id:     105625445
+Git author:            Anshum <105625445+anshum940@users.noreply.github.com>
+Push remote:           https://github.com/anshum940/white-horse.git
+Branch before push:    main, ahead of origin/main by exactly one commit
+```
+
+The feature commit was published with:
+
+```powershell
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project push origin main
+```
+
+Push result:
+
+```text
+To https://github.com/anshum940/white-horse.git
+   cbb7647..fe0cbff  main -> main
+```
+
+The exact workflow was discovered and monitored with:
+
+```powershell
+gh run list --repo anshum940/white-horse --branch main --limit 8 --json databaseId,headSha,status,conclusion,url,workflowName,createdAt,event,displayTitle
+gh run watch 36386673937 --repo anshum940/white-horse --exit-status
+```
+
+GitHub Actions run [36386673937](https://github.com/anshum940/white-horse/actions/runs/36386673937), **Verify and deploy White Horse**, completed successfully for full SHA `fe0cbffbce6fbb1389d94399c3ee4a342b78dbf0`. Job `108813380944` passed checkout, locked dependency installation, dependency audit, type-check, tests, production PWA build, GitHub Pages configuration and artifact upload. Job `108813509921` deployed the artifact to Pages successfully. GitHub reported only its informational notice that the `ubuntu-latest` label will migrate to Ubuntu 26 beginning 19 October 2026; this did not affect the run.
+
+### Public HTTPS and production-browser verification
+
+The deployed release was opened at `https://anshum940.github.io/white-horse/?build=fe0cbff` in the signed-in test browser. The existing service worker initially announced **A verified update is available**. Selecting **Update** activated the new release. The existing browser-local company and preparer remained visible afterward, demonstrating that this deployment did not clear the site's IndexedDB data.
+
+Read-only live checks confirmed:
+
+- the application document returns HTTP `200`, `text/html; charset=utf-8`;
+- the response sends `Strict-Transport-Security: max-age=31556952`;
+- `/white-horse/assets/index-Dscc2BlK.js` returns HTTP `200` as JavaScript;
+- `/white-horse/assets/index-Bqij8vIm.css` returns HTTP `200` as CSS;
+- `/white-horse/manifest.webmanifest` returns HTTP `200` as a web-app manifest; and
+- `/white-horse/sw.js` returns HTTP `200` as JavaScript.
+
+The production UI was inspected after the update. The **Import Trial Balance** dialog contains the `WH-TB-1.0` XLSX and CSV templates and states that White Horse detects worksheets, scans the first 50 rows, accepts XLSX/CSV/TSV/delimited TXT, and opens a column mapper for unclear meanings. The **Financial statements** module exposes **PDF & signatures** and **Export PDF**. The signing dialog provides independent Director and Chartered Accountant visibility controls; enabling them without saving exposed Director name/designation/eight-digit DIN fields at lower left and CA capacity/firm/signing-person/six-digit ICAI membership/optional UDIN fields at lower right. The QA-only toggles were cancelled, so no live company setting was changed.
+
+The live Export PDF control was not invoked because it intentionally opens the operating-system print dialog. Its six-section print DOM, statement content and signing identifiers had already been verified against the production build in local browser QA and component tests. PDF creation therefore remains a user-controlled browser **Save as PDF** action rather than a server upload.
+
+GitHub's official documentation confirms that `github.io` Pages sites are served over HTTPS automatically and documents HSTS-compatible HTTPS enforcement: https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https. The public release URL is:
+
+```text
+https://anshum940.github.io/white-horse/
+```
+
+### Final result and next operational steps
+
+The requested adaptive Trial Balance workflow, standards-based PDF export, and independently configurable Director/CA signing blocks are implemented, tested, published and verified on the public HTTPS site. Existing companies remain browser-local to the same origin and browser profile; deployment updates do not erase them. Because GitHub Pages is static hosting, there is no central multi-device database or account sync in this release. Before commercial use, the product still needs customer tenancy/authentication, encrypted managed storage and backup/restore policy, authorization controls, server-side audit retention, monitoring/support, legal/privacy terms, and professional Schedule III/statutory review. Scanned documents, legacy `.xls`, password-protected/corrupt workbooks and proprietary non-tabular exports remain outside the adaptive importer and must first be exported to a supported tabular format.
