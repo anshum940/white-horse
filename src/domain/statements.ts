@@ -219,6 +219,15 @@ export function calculateFinancialStatements(context: StatementContext): Financi
     ledgerIds: [...equityLiabilityLines.flatMap((line) => line.ledgerIds), ...profitAfterTax.ledgerIds]
   });
 
+  // Schedule III permits a vertical presentation. White Horse presents sources of funds first:
+  // Equity and Liabilities, followed by Assets. The underlying calculations remain unchanged.
+  const equityAndLiabilitiesStart = balanceSheet.findIndex((line) => line.code === 'BS-EQUITY-LIABILITIES');
+  if (equityAndLiabilitiesStart > 0) {
+    const assetPresentation = balanceSheet.slice(0, equityAndLiabilitiesStart);
+    const equityAndLiabilityPresentation = balanceSheet.slice(equityAndLiabilitiesStart);
+    balanceSheet.splice(0, balanceSheet.length, ...equityAndLiabilityPresentation, ...assetPresentation);
+  }
+
   const nodeAmount = (code: string, comparative = false) => {
     const balance = balances.get(code);
     return comparative ? balance?.comparativePaise ?? 0 : balance?.currentPaise ?? 0;

@@ -5,9 +5,9 @@
 | Field | Value |
 | --- | --- |
 | Product | White Horse Financial Statements Preparation & Reporting Tool |
-| Architecture version | 1.0 |
+| Architecture version | 1.1 |
 | Status | Approved baseline for implementation |
-| Date | 2026-09-27 |
+| Date | 2026-09-29 |
 | Default reporting framework | Schedule III, Division I (non-Ind AS), configurable and extensible |
 | Deployment model | Local-first browser PWA with optional static hosting on GitHub Pages |
 | Data residency | Local browser only; no application data is sent to GitHub or another server |
@@ -47,7 +47,7 @@ These exclusions prevent silent overstatement of compliance. The schema and engi
 5. **Review segregation:** preparer and reviewer actions are distinct; approval cannot be inferred from data completeness.
 6. **Deterministic calculation:** given the same dataset, mapping version, approved adjustments, taxonomy version, and rounding policy, outputs are identical.
 7. **Minor-unit arithmetic:** accounting amounts are stored as integer paise; floating-point arithmetic is not used for ledger aggregation.
-8. **Defence in depth:** local login, least-privilege roles, safe file parsing, tamper-evident audit events, explicit backups, content security controls, and no secrets in the client bundle.
+8. **Defence in depth:** explicit public-demo access boundary, least-privilege workflow roles, safe file parsing, tamper-evident audit events, explicit backups, content security controls, and no production secrets in the client bundle.
 9. **Progressive enhancement:** the installed PWA works offline after its application shell is cached; unsupported browser capabilities produce clear blocking diagnostics.
 10. **Framework versioning:** Schedule III presentation taxonomies, validation rules, mapping masters, and accounting policies carry explicit versions and effective dates.
 
@@ -121,8 +121,9 @@ No state transition deletes history. Replacing an import, mapping, or report cre
 
 ### 7.1 Access and installation
 
-- First-run setup: create local administrator, strong passphrase, organisation label, recovery warning.
-- Sign in/out and session timeout.
+- Current public release: branded study-access cover using the documented `admin` / `admin123` demonstration credential, a tab-scoped non-secret session marker, sign-out, and bounded client-side failed-attempt delay.
+- Security boundary: the static cover is bypassable and provides no server-side identity or data isolation; a production release must replace it with an identity provider/server session and enforced tenant/object authorisation.
+- Target production extension: first-run organisation setup, managed administrator enrolment, recovery, session expiry and auditable sign-in events.
 - Browser capability and storage-persistence check.
 - Install-PWA guidance and offline readiness indicator.
 - Role matrix: Administrator, Preparer, Reviewer, Viewer.
@@ -171,11 +172,11 @@ No state transition deletes history. Replacing an import, mapping, or report cre
 
 ### 7.7 Financial statements and notes
 
-- Balance Sheet.
+- Balance Sheet with Equity and Liabilities presented before Assets.
 - Statement of Profit and Loss.
 - Cash Flow Statement.
 - Statement of Changes in Equity where configured/applicable.
-- Notes to Accounts and Significant Accounting Policies.
+- Notes to Accounts and Significant Accounting Policies, including factual automatic company/TB-derived text and explicit `NO_BALANCE` / `REQUIRES_WORKPAPER` boundaries.
 - Comparative columns, note cross-references, rounding, prior-year regrouping marker, and drill-down.
 
 ### 7.8 Ratios and analytics
@@ -206,6 +207,7 @@ No state transition deletes history. Replacing an import, mapping, or report cre
 - Backup, encrypted export, restore preview, integrity validation, and restore point.
 - Audit trail search/export.
 - Retention settings and application/database versions.
+- Global factory reset: one explicit confirmation, atomic deletion of all application tables, restoration of only the synthetic seed, active-company reset and sign-out. A verified encrypted backup is required for recoverability.
 
 ## 8. Permission model
 

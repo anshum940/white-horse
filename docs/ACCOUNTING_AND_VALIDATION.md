@@ -71,6 +71,8 @@ Regrouping adjustments may use taxonomy nodes without changing ledger master cla
 
 Aggregate adjusted signed balances by mapped Balance Sheet node, then roll leaf values to parents. Assets use debit-normal presentation; equity and liabilities use credit-normal presentation.
 
+Presentation order is Equity and Liabilities first, followed by Assets. This order is applied after all sections, totals and the current-profit bridge are calculated, so it does not change the accounting equation, mapped amounts or drill-down lineage.
+
 Current-period profit/loss from the Statement of Profit and Loss is bridged to equity for presentation where the TB has not already closed nominal accounts. The bridge is a calculated statement line, not a ledger mutation, and is explicitly included in reconciliation.
 
 ```text
@@ -126,6 +128,14 @@ Each movement must reconcile to mapped equity ledgers and approved adjustments.
 
 Face statement nodes marked `noteRequired` must reference a note. Note totals must equal the corresponding face amount before presentation rounding. Differences caused solely by displayed rounding are disclosed through a rounding adjustment line when configured; raw paise totals must still reconcile.
 
+The automatic disclosure layer has a strict evidence boundary:
+
+- company identity, CIN, registered office, industry and reporting dates come from the selected company/period master;
+- numerical note text comes from mapped ledger balances, comparative balances and posted adjustments;
+- a zero or absent mapped balance is labelled `NO_BALANCE`, not automatically `NOT_APPLICABLE`;
+- ratios and regulatory disclosures that need operating explanations, statutory registers, legal confirmations, ageing detail or other non-ledger evidence are labelled `REQUIRES_WORKPAPER`; and
+- generated text remains a draft until the preparer and reviewer complete the note checklist.
+
 ## 7. Rounding
 
 - Supported display scales: rupees, thousands, lakhs, crores.
@@ -168,49 +178,29 @@ RAG status: Red if any blocking/error is open; Amber if warnings are open; Green
 
 ## 10. Validation catalogue
 
+The following rules are executed by the current deterministic workspace validator. Import-preview controls (file type, size, row syntax, semantic column selection and exact activation totals) run separately before a TB is activated.
+
 | Rule ID | Severity | Trigger | Suggested corrective action |
 | --- | --- | --- | --- |
-| TB-001 | BLOCKING | Closing debits do not equal closing credits | Correct source/import column mapping; do not force a suspense plug |
-| TB-002 | ERROR | Row closing does not equal opening plus movements | Verify source row and sign/column selection |
-| TB-003 | ERROR | Duplicate ledger code with conflicting name | Merge only after documented source correction or use distinct codes |
-| TB-004 | WARNING | Duplicate normalized ledger name | Confirm whether separate ledgers are intentional |
-| TB-005 | ERROR | Amount exceeds safe integer paise range | Split/scale import or use supported higher-precision extension |
-| TB-006 | WARNING | Inactive ledger has non-zero balance/activity | Reactivate or correct source |
-| TB-007 | WARNING | Comparative amount missing for material ledger | Import comparative TB or document first-year/not-applicable status |
-| TB-008 | ERROR | Invalid number/date or both debit and credit on same closing row | Correct source format |
-| MAP-001 | BLOCKING | Material ledger unmapped | Map and submit for review |
-| MAP-002 | ERROR | Mapping points to non-leaf/inactive taxonomy node | Select an active leaf node |
-| MAP-003 | WARNING | Debit balance under credit-normal head or vice versa | Verify sign, mapping, and whether separate presentation is required |
-| MAP-004 | ERROR | Current/non-current classification missing where required | Record operating-cycle/maturity classification |
-| MAP-005 | WARNING | Mapping differs from prior year | Document and approve regrouping/reclassification |
-| MAP-006 | ERROR | Material ledger has no cash-flow class | Assign operating/investing/financing/non-cash class |
-| MAP-007 | WARNING | Suspense/rounding/clearing ledger has material balance | Investigate and clear or document |
-| ADJ-001 | BLOCKING | Adjustment debits differ from credits | Correct journal lines |
-| ADJ-002 | ERROR | Mandatory narration/reference/preparer absent | Complete workpaper metadata |
-| ADJ-003 | BLOCKING | Draft/submitted material adjustment expected in final output | Approve/post or reject explicitly |
-| ADJ-004 | ERROR | Preparer attempts self-approval where segregation is required | Assign independent reviewer |
-| ADJ-005 | WARNING | Adjustment date outside reporting period | Correct date or document post-period treatment |
-| ADJ-006 | ERROR | Posted adjustment references unmapped ledger/node | Complete mapping before posting |
-| BS-001 | BLOCKING | Assets do not equal equity and liabilities | Trace mapping, signs, profit bridge, and adjustments |
-| PL-001 | BLOCKING | P&L result does not reconcile to equity bridge | Correct mapping/closing treatment |
-| CF-001 | BLOCKING | Closing cash flow does not reconcile to adjusted TB cash | Complete cash-flow classification and movement reconciliation |
-| NOTE-001 | ERROR | Required note missing | Create and complete note |
-| NOTE-002 | BLOCKING | Note total differs from face statement raw amount | Correct note/mapping; do not hide with display rounding |
-| NOTE-003 | WARNING | Required comparative note detail missing | Add comparative or document applicability |
-| DISC-001 | WARNING | Related-party indicator present but disclosure incomplete | Complete related-party disclosure review |
-| DISC-002 | WARNING | Promoter/shareholding or other configured disclosure unanswered | Complete disclosure checklist |
-| DISC-003 | WARNING | Ageing schedule source detail insufficient | Import/detail or document limitation before finalisation |
-| RATIO-001 | WARNING | Ratio changes beyond configured threshold | Add variance explanation |
-| RATIO-002 | INFO | Ratio denominator zero/unavailable | Confirm `N/A` and disclosure wording |
-| RATIO-003 | WARNING | Ratio components differ from prior configuration | Approve formula version change |
-| REV-001 | BLOCKING | Mapping version is not locked | Complete mapping approval |
-| REV-002 | BLOCKING | No completed validation run for current dataset hash | Re-run validations |
-| REV-003 | BLOCKING | Required preparer/reviewer sign-off missing | Complete approvals |
-| REV-004 | ERROR | Backup not completed after latest material change | Export and verify backup |
-| REV-005 | BLOCKING | Dataset changed after approval | Reopen review and approve current version |
-| SEC-001 | WARNING | Storage persistence not granted | Export backups frequently; use installed PWA/browser profile |
-| SEC-002 | ERROR | Audit hash chain verification fails | Stop finalisation, restore verified backup, investigate |
-| SEC-003 | WARNING | Default/demo credentials or synthetic company still active in a real workspace | Remove/change demo access and data |
+| TB-000 | BLOCKING | No active ledger balances exist | Import and activate a non-empty balanced Trial Balance |
+| TB-001 | BLOCKING | Current signed Trial Balance total is not zero | Correct source/import sign or column mapping; do not create a suspense plug |
+| TB-002 | BLOCKING | Comparative signed Trial Balance total is not zero | Correct comparative balances or comparative column/sign mapping |
+| TB-003 | ERROR | A normalised ledger code occurs more than once | Give every imported ledger a unique stable source code and re-import |
+| MAP-001 | BLOCKING | A material ledger is unmapped | Map to one active leaf taxonomy head and review it |
+| MAP-002 | ERROR | A mapping points to an unavailable taxonomy node | Select an active Division I taxonomy head |
+| MAP-003 | WARNING | A material balance is opposite to the mapped head's normal balance | Verify the sign, mapping and separate-presentation need |
+| MAP-004 | BLOCKING | One ledger has more than one statement mapping | Retain exactly one reviewed mapping so the amount cannot be duplicated |
+| MAP-005 | WARNING | A non-zero below-materiality ledger is unmapped and excluded | Map or explicitly clear the ledger so completeness is documented |
+| ADJ-001 | BLOCKING | Journal debits and credits differ | Correct the journal lines before submission or posting |
+| ADJ-002 | BLOCKING | Journal has fewer than two lines, a negative amount, both sides on one line, or a zero-value line | Correct the journal structure |
+| ADJ-003 | WARNING | Submitted adjustment is awaiting review and does not yet affect statements | Approve/post or reject explicitly |
+| ADJ-004 | ERROR | Journal line references a ledger absent from the active TB | Select an active ledger or recreate the journal after re-import |
+| BS-001 | BLOCKING | Current assets differ from current equity and liabilities | Trace mappings, signs, posted adjustments and profit bridge |
+| BS-002 | BLOCKING | Comparative assets differ from comparative equity and liabilities | Trace comparative mappings, signs and profit bridge |
+| CF-001 | BLOCKING | Calculated cash movement differs from movement in mapped cash | Review cash-flow classification and explicit cash-flow inputs |
+| REV-000 | INFO | All core automated reconciliations pass and no other automatic finding exists | Complete disclosure workpapers and professional review |
+
+The synthetic seed also contains example persisted observations (`DISC-003` and `RATIO-001`) so the review workflow can be demonstrated. They are not silently treated as executed rules for a newly imported company.
 
 ## 11. Finalisation gate
 

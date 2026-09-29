@@ -27,6 +27,20 @@ describe('Schedule III note schedules', () => {
     expect(schedule.rows.length).toBeGreaterThan(0);
     expect(schedule.totalCurrentPaise).toBe(statementLine?.currentPaise);
     expect(schedule.totalComparativePaise).toBe(statementLine?.comparativePaise);
+    expect(schedule.automaticDisclosure.status).toBe('GENERATED');
+    expect(schedule.automaticDisclosure.paragraphs.join(' ')).toContain('mapped ledger');
+  });
+
+  it('derives the company overview from the selected company master and reporting period', () => {
+    const schedule = buildNoteSchedule(note('1'), demoDataset, statements);
+    const disclosure = schedule.automaticDisclosure.paragraphs.join(' ');
+
+    expect(schedule.automaticDisclosure.status).toBe('GENERATED');
+    expect(disclosure).toContain(demoDataset.company.legalName);
+    expect(disclosure).toContain(demoDataset.company.cin);
+    expect(disclosure).toContain(demoDataset.company.registeredOffice);
+    expect(disclosure).toContain(demoDataset.company.industry);
+    expect(disclosure).toContain(demoDataset.period.label);
   });
 
   it('shows a mathematically complete net carrying amount bridge without inventing FAR movements', () => {
@@ -49,5 +63,24 @@ describe('Schedule III note schedules', () => {
     const inventorySchedule = buildNoteSchedule(note('7'), demoDataset, statements);
     const inventoryLine = statements.balanceSheet.find((line) => line.code === 'BS-CA-INVENTORY');
     expect(inventorySchedule.totalCurrentPaise).toBe(inventoryLine?.currentPaise);
+  });
+
+  it('does not treat a nil ledger schedule as proof that the note is inapplicable', () => {
+    const customNote = {
+      ...note('5'),
+      noteNumber: '99',
+      taxonomyCodes: ['BS-NOT-PRESENT']
+    };
+    const schedule = buildNoteSchedule(customNote, demoDataset, statements);
+
+    expect(schedule.automaticDisclosure.status).toBe('NO_BALANCE');
+    expect(schedule.automaticDisclosure.paragraphs.join(' ')).toContain('does not by itself make the disclosure inapplicable');
+  });
+
+  it('keeps non-ledger regulatory assertions behind a workpaper requirement', () => {
+    const schedule = buildNoteSchedule(note('30'), demoDataset, statements);
+
+    expect(schedule.automaticDisclosure.status).toBe('REQUIRES_WORKPAPER');
+    expect(schedule.automaticDisclosure.paragraphs.join(' ')).toContain('does not establish non-ledger regulatory facts');
   });
 });

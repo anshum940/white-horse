@@ -5,6 +5,7 @@ import {
   initializeDatabase,
   listCompanyWorkspaces,
   loadWorkspace,
+  resetAllWorkspaceData,
   updateStatementSignatureSettings,
   type CompanyWorkspaceInput
 } from './db';
@@ -90,5 +91,17 @@ describe('company workspace database controls', () => {
       caMembershipNumber: '123456'
     });
     expect(reloaded?.auditEvents.at(-1)?.action).toBe('STATEMENT_SIGNATURE_SETTINGS_UPDATED');
+  });
+
+  it('factory-resets every user-created workspace and restores only the synthetic dataset', async () => {
+    const companyId = await createCompanyWorkspace(input());
+    await expect(loadWorkspace(companyId)).resolves.toBeDefined();
+
+    await resetAllWorkspaceData();
+
+    const companies = await listCompanyWorkspaces();
+    expect(companies.map((company) => company.companyId)).toEqual(['demo-company']);
+    await expect(loadWorkspace(companyId)).resolves.toBeUndefined();
+    await expect(loadWorkspace('demo-company')).resolves.toBeDefined();
   });
 });

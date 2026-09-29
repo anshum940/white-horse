@@ -25,6 +25,8 @@ Every company-owned record carries `companyId`. Every period-owned record also c
 
 The index notation below is conceptual; final Dexie syntax is defined in the implementation and migration tests.
 
+The schema catalogue in sections 3.1–3.21 describes the production target. The current browser release implements the operational subset `companies`, `periods`, `imports`, `ledgers`, `mappings`, `adjustments`, `adjustmentLines`, `validations`, `notes`, `auditEvents`, and `users` in schema version 1. Fields not present in the current TypeScript interfaces are roadmap fields and must not be assumed to exist in a backup or runtime query.
+
 ### 3.1 `appSettings`
 
 Primary key: `key`
@@ -190,6 +192,7 @@ The backup file itself is downloaded to a user-selected location; history record
 - Resolve validation: `validationResults`, `reviewComments`, `approvals`, `auditEvents`.
 - Finalise period: all prerequisite reads plus atomic write to `finalisationSnapshots`, `reportingPeriods`, `approvals`, `auditEvents`.
 - Restore: performed against a temporary database; live replacement is a separate explicitly confirmed operation with pre-restore backup.
+- Factory reset: clear all eleven current-release tables and reinsert the synthetic factory dataset inside one read/write transaction. If any clear or seed write fails, the transaction rolls back; session and active-company UI state change only after success.
 
 ## 5. Integrity constraints
 

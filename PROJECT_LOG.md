@@ -1625,3 +1625,154 @@ https://anshum940.github.io/white-horse/
 The requested sample workbooks, modest typography increase, neutral greeting, professional A4 formatting, optional Director/CA blocks and Schedule III-oriented note schedules are implemented, tested, published and verified. The three local deliverable workbooks remain in the task output directory in addition to their public in-app downloads.
 
 This release remains a local-first, single-browser preparation tool. The report schedules reconcile deterministically to the active Trial Balance and posted adjustments, but register-dependent disclosures, applicable accounting policies, legal approval, auditor reporting and current Schedule III compliance still require competent preparer/reviewer evidence. Before commercial SaaS sale, the documented production roadmap still requires tenant authentication/authorisation, encrypted central data storage and backup/restore, server-side audit retention, monitoring/support, legal/privacy controls, validated framework packs for Division II/III and regulated sectors, and independent accounting/security acceptance testing.
+
+## 29 September 2026 — White Horse access cover, enhanced financial controls, automatic disclosures and factory reset
+
+### Objective and requested changes
+
+The user requested five connected enhancements:
+
+1. Add a high-quality White Horse-themed login cover using demonstration credentials `admin` / `admin123`, then reveal the existing tool after successful entry.
+2. Improve the accuracy and control environment of financial-statement preparation.
+3. Produce Schedule III-oriented note disclosures automatically from the active company and accounting data.
+4. Present Equity and Liabilities before Assets in the Balance Sheet.
+5. Add one globally available reset control that deletes the browser-local tool data only after a confirmation step.
+
+The explicit Balance Sheet instruction is interpreted as **Equity and Liabilities first, followed by Assets**, because the request says Equity and Liabilities should be first instead of the current Assets-first order. The calculation totals and reconciliation equation will remain unchanged.
+
+### Initial state and authoritative research
+
+The branch began clean and synchronised:
+
+```text
+## main...origin/main
+```
+
+Initial inspection covered `src/App.tsx`, the database/reset implementation, statement engine, validation rules, note templates/schedules, report components, UI wiring tests, current typography and the White Horse SVG brand asset.
+
+Authoritative sources reviewed before implementation:
+
+- MCA Schedule III amendment notification effective 1 April 2021: https://www.mca.gov.in/Ministry/pdf/ScheduleIIIAmendmentNotification_24032021.pdf
+- ICAI Guidance Note on Division I, Non-Ind AS Schedule III (revised January 2022): https://publication.icai.org/publication/76
+- GitHub Pages HTTPS/public-site guidance: https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https
+- OWASP Authentication Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+- OWASP Authorization Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html
+- OWASP HTML5 Security Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html
+
+The accounting sources confirm that Schedule III requires detailed entity-specific information—including PPE/intangible gross and net carrying-amount reconciliations and receivable/payable ageing—that cannot be inferred reliably from closing Trial Balance balances alone. Automatic disclosure generation will therefore be strictly evidence-based: it may use company master data, reporting-period metadata, mapped ledgers, comparative balances and posted adjustments, while clearly identifying fixed-asset-register, ageing, share-register and other workpaper requirements that remain outstanding.
+
+The security sources confirm that a client-only access check on a public static site is bypassable and cannot be treated as real authentication or authorisation. GitHub Pages publishes the client bundle and static assets publicly. The requested credentials will therefore be implemented as a polished **study/demo access cover** with a tab-scoped, non-secret UI session marker and no stored plaintext password. It will be labelled in documentation as a presentation gate only. Production sale still requires a backend identity provider, server-side session enforcement, per-tenant authorisation, protected data APIs, rate limiting, secure cookies and operational monitoring.
+
+### Planned implementation and verification
+
+1. Add a branded responsive login component using the existing SVG identity, a hashed credential verifier, accessible validation, show/hide password, limited failed-attempt handling and explicit demo-security wording.
+2. Gate the application shell behind a tab-scoped session and add a logout control.
+3. Add a global **Reset all data** action with one explicit confirmation dialog. The reset will clear every application table, remove active-company/session UI state, restore only the synthetic factory dataset so the app can reopen safely, and return to the login cover.
+4. Reorder the shared Balance Sheet model so UI, XLSX and PDF outputs all show Equity and Liabilities before Assets.
+5. Extend automated controls for comparative Trial Balance equality, duplicate ledger mappings, malformed or orphaned journal lines, and comparative Balance Sheet reconciliation.
+6. Generate factual company- and data-specific disclosure text alongside every note schedule, without auto-asserting non-ledger facts or marking notes complete.
+7. Add focused unit/component/database tests, run the complete test/typecheck/build/audit gate, render the PDF for A4 visual QA, exercise the login/reset confirmation flow in a browser-safe test database, document results, then publish through a fresh GitHub device-code login if all checks pass.
+
+### Implementation progress and PDF workflow activation
+
+The first implementation pass added the demo access verifier and cover component, moved database initialisation behind successful access, added sign-out and the global reset confirmation flow, added a full IndexedDB factory-reset transaction, reordered the shared Balance Sheet report model, and introduced factual automatic-disclosure output in both the Notes workspace and printable financial pack. Focused authentication, database-reset and statement-order tests were added alongside these changes.
+
+Because the printable financial pack changed, the bundled PDF skill was read in full and its required PDF-edit operation marker was invoked before further report authoring and render validation. The first PowerShell invocation failed with a parser error because two quoted executable paths were placed at the beginning of the command without PowerShell's call operator. It did not run the marker. The safe retry prefixed the executable with `&`; it completed successfully with operation kind `edit`, expected output count `1`, and output format `pdf`. No dependency was installed.
+
+The validation engine now adds these deterministic accuracy controls: comparative Trial Balance equality (`TB-002`, blocking), unique ledger codes (`TB-003`, error), exactly one mapping per ledger (`MAP-004`, blocking), explicit warning for every non-zero unmapped balance below materiality (`MAP-005`), valid two-or-more-line journal structure (`ADJ-002`, blocking), valid active-ledger references on journals (`ADJ-004`, error), and comparative Balance Sheet equality (`BS-002`, blocking). Duplicate mappings are never silently selected without a blocking finding. New tests deliberately corrupt comparative balances, mappings and journal lines to prove the new controls fire.
+
+The first TypeScript pass found five strict indexed-access errors in the new duplicate-ledger/mapping logic and its fixture. Root cause: TypeScript does not infer that array element `0` exists solely from a prior length check, and direct indexed fixture access therefore retained `undefined` in its type. Explicit first-element guards were added in production logic and the test now asserts that its two required fixture mappings exist. This was a compile-time safety issue; no runtime or stored data was affected. The concurrent Vitest process had not completed within the initial command yield, so a clean standalone test run is required after the compiler repair.
+
+The repaired TypeScript check passed. The next complete Vitest run executed 65 tests and found two assertion-only failures: React server rendering preserves the `autoComplete` property spelling in this test environment, and the regulatory-note test expected “cannot establish” while the deliberately cautious product text says “does not establish.” The assertions were aligned with the actual semantic output. The rendered form still uses the correct HTML autocomplete properties in the browser, and no production logic changed as a result of these two test repairs.
+
+The global reset implementation was then hardened so clearing all eleven application tables and restoring the synthetic factory dataset occur in one IndexedDB transaction. This preserves an all-or-nothing factory reset: an unexpected write failure rolls the operation back rather than leaving an empty partially reset workspace. Authentication/session cleanup and the active-company pointer remain outside IndexedDB and are reset immediately after the transaction succeeds.
+
+After the assertion corrections, the full suite passed: 19 test files and 65/65 tests. Documentation was synchronised across `README.md`, `SECURITY.md`, `PRIVACY.md`, the user guide, accounting/validation catalogue, report catalogue, functional architecture and database schema. It now records the public study credential and its bypassable static-site boundary; the Equity-and-Liabilities-first ordering; factual automatic-disclosure inputs and workpaper limits; the exact currently implemented validation rule IDs; the irreversible once-confirmed reset; and the atomic clear-and-reseed transaction. The database document now distinguishes the eleven-store current implementation from its broader production target so roadmap fields are not mistaken for runtime data.
+
+### Browser interaction and visual QA
+
+The first local preview request used the conventional Vite preview port. Ports 4173 and 4174 were already occupied, so the preview selected port 4175. The in-app browser showed a previously cached service-worker build on that reused origin (including the earlier greeting), which could not provide reliable evidence for the current source. Root cause: browser service-worker/cache scope is origin-based, and an already-used preview origin can retain an earlier PWA. No application data or production deployment was changed. A strict isolated preview was therefore started on `127.0.0.1:54129`, giving this build a fresh origin for deterministic QA.
+
+The isolated preview was exercised with the documented `admin` / `admin123` study credentials. Browser QA confirmed:
+
+- the login cover renders as a professional White Horse split layout with branded emblem, controlled green/gold palette, accessible labelled fields, password visibility control, security boundary notice and responsive behaviour;
+- successful entry opens the existing workspace and shows `Hello, Abhijit`;
+- the Balance Sheet starts with `EQUITY AND LIABILITIES`, followed by shareholders' funds and liabilities, while the Assets block follows later and report calculations remain reconciled;
+- Note 1 displays generated company-specific identity, CIN, registered-office, industry and reporting-period facts;
+- note schedules show current/comparative balances, mapped-ledger evidence and explicit workpaper requirements instead of inventing register-dependent disclosures; and
+- the global reset action opens a clear irreversible-action dialog listing the affected records and factory-data restoration behaviour.
+
+The destructive reset confirmation was deliberately **not** activated during browser QA. The non-destructive `Cancel` control closed the dialog, and the existing automatic note disclosure remained visible, proving that merely opening/cancelling the confirmation does not change data. The reset transaction itself is covered by an isolated database test that inserts a custom company, performs the reset, and verifies that only the synthetic factory company remains. Browser console inspection after navigation and cancellation reported zero warnings and zero errors.
+
+The first new PDF-QA browser process exited before the CDP script could connect. Chrome diagnostics showed repeated GPU-process failures in this managed Windows environment. A fresh disposable profile was launched with the browser sandbox and GPU pipeline disabled solely for rendering the trusted local fixture; Chrome then exposed its loopback-only DevTools endpoint normally. The first resulting file was a one-page blank A4 PDF. The render-readiness probe correctly saw six report sections, but the fixture mounted `FinancialPdfPack` directly while the print stylesheet intentionally exposes it only as a direct child of `.statement-page`. Root cause: the temporary QA wrapper did not mirror the production DOM, not a production report defect. The fixture was corrected to use the same `.statement-page > .financial-pdf-pack` structure before rerendering.
+
+The corrected CDP render waited for all six top-level report sections, all 30 notes and browser fonts before invoking `Page.printToPDF`. `pdfinfo` reported:
+
+```text
+Tagged PDF: yes
+Page size: A4 (594.96 × 841.92 pt)
+Pages: 14
+File size: 487,649 bytes
+```
+
+All 14 pages were rasterised at 110 DPI with the bundled Poppler runtime and visually inspected in full. Findings:
+
+- the cover hierarchy, CIN, registered office, framework, periods and professional-review warning are legible and aligned;
+- Balance Sheet, Profit and Loss and Cash Flow each remain on a single page with Director/DIN at bottom left and CA/membership at bottom right;
+- the Balance Sheet visibly begins with Equity and Liabilities and ends with Total Assets;
+- the notes repeat the company/report header on continuation pages, keep each disclosure block intact, and show automatic/generated versus requires-workpaper status without clipping;
+- the PPE and intangible carrying-amount bridges, completion requirements and ratio schedule are readable; and
+- no blank page, text overlap, clipped table, orphaned signature or unexpected page break was observed.
+
+The first extracted-text assertion compared literal spaces and casing. Chrome's tagged PDF uses tab characters between bold table words, so literal `total assets` did not match `TOTAL\tASSETS`; the second diagnostic print attempt also hit the Windows console's CP-1252 limitation on the rupee symbol. These were QA-script assumptions, not PDF defects. The final check normalised all whitespace and casing without printing the rupee-bearing page text. It verified 14 non-empty pages and the expected Equity and Liabilities, Total Assets, automatic disclosure, PPE, requires-workpaper, ratio, DIN and membership markers. Per-page extracted character counts ranged from 642 to 3,178.
+
+The temporary HTML/React/CDP fixtures were removed with `apply_patch`, and the output/profile cleanup paths were resolved and checked against the workspace QA-output prefix or operating-system temporary QA-profile prefix before recursive deletion. The first cleanup attempt could not completely delete the second Chrome profile because the headless browser's child processes still held cache/database files even though the DevTools listener had closed. The exact isolated main PID from the QA launch was verified as `chrome.exe` with the matching 30 September 2026 00:12:12 start time, then stopped; the profile was deleted successfully on retry. The user's normal Chrome processes and tabs were not targeted. The generated PDF and page PNGs were QA scratch artefacts and are not repository deliverables.
+
+### Final local verification gate
+
+After removing every QA-only source and output file, the clean local gate reported:
+
+```text
+npm test
+  19 test files passed; 65/65 tests passed
+
+npm run typecheck
+  passed
+
+npm run build
+  passed; exit code 0; Vite 8.3.1; 189 modules transformed
+  CSS 71.45 kB / 14.26 kB gzip
+  Statements chunk 23.86 kB / 5.61 kB gzip
+  Trial Balance chunk 40.67 kB / 12.34 kB gzip
+  entry 419.06 kB / 127.97 kB gzip
+  PWA precache 29 entries / 759.61 KiB
+
+git diff --check
+  passed
+```
+
+The restricted `npm audit --omit=dev --audit-level=high` invocation could not reach npm's official advisory endpoint and could not write its normal log outside the managed workspace. It was rerun with approved network access against the official npm registry and returned `found 0 vulnerabilities`. No package was installed, upgraded or changed.
+
+A repository scan found no AWS-style access-key IDs, GitHub tokens, private-key headers or the user's personal email address. The intended public study credential remains documented by design; the production module stores only the SHA-256 digest, while tests/documentation contain the user-requested `admin123` value so the study login is usable. A legacy `Aarav Mehta` literal remains only in the database migration condition that converts previously stored old-owner values to `Abhijit`; it is not rendered as current product data.
+
+The final uncommitted scope contains 23 modified tracked files plus four new authentication/login files, with no QA fixture or generated PDF artefact. The branch remains `main` and was synchronised with `origin/main` before this task's release work began.
+
+### Git identity and fresh device authentication
+
+Pre-publication tooling and identity checks reported:
+
+```text
+Git 2.55.0.windows.2
+GitHub CLI 2.93.0
+Node.js v24.16.0
+npm 11.16.0
+Author: Anshum <105625445+anshum940@users.noreply.github.com>
+Remote: https://github.com/anshum940/white-horse.git
+Branch: main
+```
+
+The first fresh `gh auth login --web` attempt could not reach GitHub's device endpoint from the restricted network sandbox. It was rerun with approved network access against GitHub's official endpoint. The browser/device flow generated a new one-time code, which is intentionally not retained in this log. The user authorised it, and GitHub CLI confirmed authentication as `anshum940` with HTTPS as the Git protocol. The active account/API identity will be checked again immediately before pushing.
+
+The post-login checks confirmed the active keyring account is `anshum940`, GitHub API user ID `105625445`, HTTPS Git operations and the required `repo`/`workflow` scopes. Other keyring accounts were inactive. The first elevated `git fetch origin main` invocation hit Git's dubious-ownership protection because the managed workspace is owned by the isolated sandbox identity while the approved network command runs as the desktop user. No global Git setting was changed. The safe retry used a one-command `-c safe.directory=C:/Users/anshu/Documents/Personal/CA-project` override and fetched successfully. Local `HEAD` and `origin/main` both resolved to `8f0ccb4c1c6e9b6d00bde976373c3af0a17a5f41`, confirming no remote divergence before commit.
+
+The first sandboxed staging command could read the repository but could not create `.git/index.lock`, because `.git` is intentionally read-only to the restricted workspace identity. It staged nothing. The exact reviewed file list was retried with approved repository write access and the same one-command safe-directory override. All 27 intended files were staged, `git diff --cached --check` passed, and the staged scope contains 1,009 insertions and 92 deletions with no unrelated or QA-only file.

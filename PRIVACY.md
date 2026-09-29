@@ -4,6 +4,8 @@
 
 White Horse has no application backend. Imported Trial Balance contents, mappings, adjustments, notes, validations, users, optional signing-block data, and audit events are stored in IndexedDB for the current site origin and browser profile. Signing-block data can include a Director's name/designation/DIN and a Chartered Accountant's name, firm, FRN, membership number, optional UDIN, place, and signing date. File parsing, accounting calculations, and report generation occur in the browser.
 
+The study-access state is a non-secret marker held in `sessionStorage` for the current tab. The entered password is not persisted. This marker is not production authentication and does not encrypt or isolate IndexedDB.
+
 The application does not include analytics, advertising, or telemetry SDKs.
 
 ## What hosting can observe
@@ -17,6 +19,7 @@ GitHub Pages serves the static HTML, JavaScript, CSS, manifest, icon, and servic
 - Clearing site data, using private browsing, storage eviction, or changing the origin can remove or isolate the workspace.
 - Persistent-storage mode, where the browser grants it, reduces automatic eviction risk but does not prevent explicit site-data deletion and does not create a cloud copy.
 - Service-worker caches contain the public application shell, not imported Trial Balance records.
+- **Reset all data** clears all eleven White Horse IndexedDB tables in one transaction, restores only the synthetic factory records, resets the active-company pointer, and signs the current tab out. This is irreversible unless a verified backup exists.
 
 ## User-controlled exports
 

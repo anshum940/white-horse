@@ -6,13 +6,19 @@ This release supports a Schedule III Division I standalone-company workflow for 
 
 The preloaded Saffron Industries Private Limited workspace is synthetic.
 
-## 2. Workspace model
+## 2. Study access cover
+
+Open the public demo and enter username `admin` with password `admin123`. A successful entry creates only a non-secret marker for the current browser tab. Use the user menu to **Sign out** and return to the cover.
+
+This cover is presentation control for study use, not production authentication. It runs in the public browser bundle, can be bypassed by someone with technical access, and does not encrypt browser data. Never import confidential information on the assumption that this shared credential protects it. A commercial deployment needs server-enforced identity, secure sessions, tenant authorisation, protected APIs, rate limiting, monitoring, and account recovery.
+
+## 3. Workspace model
 
 White Horse stores data inside IndexedDB in the browser. One browser profile can contain multiple independent company workspaces. A created company remains after ordinary reloads, browser restarts, and application deployments when the same White Horse URL and browser profile are used. Opening the public URL on another browser, profile, device, or origin creates a separate local database. There is no automatic cloud synchronisation.
 
 Company Setup displays whether the browser reports `PERSISTENT`, `BEST EFFORT`, or an unavailable/unsupported persistence state. Use **Protect browser storage** where available, but do not treat it as a backup: explicit site-data deletion still removes persistent browser storage. Use an encrypted backup to recover work or move a controlled database between browsers.
 
-## 3. Recommended workflow
+## 4. Recommended workflow
 
 ### Company and period
 
@@ -49,9 +55,13 @@ Enter a reference, date, type, narration, workpaper reference, and at least two 
 
 Select **Run all validations** after imports, mappings, or adjustments change. Investigate blocking/error results first, then warnings. Record a resolution or explicit acceptance against persisted observations. Automated exceptions disappear only when their underlying data is corrected.
 
+The current deterministic run checks: presence and equality of the current Trial Balance; equality of comparative balances; unique ledger codes; material and non-zero unmapped ledgers; unavailable taxonomy heads; opposite-normal balances; duplicate mappings; balanced and structurally valid journals; journal references to active ledgers; current and comparative Balance Sheet equality; cash-flow reconciliation; and submitted adjustments awaiting review. A blocking result means the generated pack is not ready for finalisation.
+
 ### Statements and notes
 
-Use statement tabs for Balance Sheet, Profit and Loss, and Cash Flow. Select an enabled line to trace its presented value to source ledgers and posted adjustments. Complete all applicable items in the 30-note workbench; the PDF note schedules show ledger-level current/comparative amounts, include posted adjustments, and reconcile to the corresponding face-statement total. Credit-normal schedules are presented as positive disclosure amounts.
+Use statement tabs for Balance Sheet, Profit and Loss, and Cash Flow. The Balance Sheet presents **Equity and Liabilities first, followed by Assets**; the order is shared by the application, workbook and PDF while the accounting equation remains Assets minus Equity and Liabilities. Select an enabled line to trace its presented value to source ledgers and posted adjustments.
+
+Complete all applicable items in the 30-note workbench. Each note shows an **Automatic company disclosure** generated only from company master data, the active Trial Balance, approved mappings, comparative balances, reporting dates and posted adjustments. The schedule shows ledger-level current/comparative amounts and reconciles to the corresponding face-statement total; credit-normal schedules are presented as positive disclosure amounts. The status `REQUIRES WORKPAPER` means the TB cannot prove the required fact. `NO BALANCE` means no mapped value was found—not that the disclosure is automatically inapplicable. Review and edit every generated paragraph before external use.
 
 The PPE and intangible notes show only a defensible net carrying-amount bridge from comparative closing amount to current closing amount when the Trial Balance does not contain asset-register movements. White Horse deliberately does not invent gross block, additions, disposals, depreciation, impairment, or class-wise register information. Complete those disclosures from the fixed-asset register and approved workpapers before marking the note complete. A note cannot be marked Complete until its three review checklist items are selected. Mark genuinely non-applicable disclosures deliberately rather than leaving them blank.
 
@@ -75,11 +85,13 @@ Create an encrypted backup before material changes and finalisation. Use a stron
 
 Finalisation requires balanced Trial Balance, complete/locked mappings, no unposted adjustments, balanced statements and cash flow, completed required notes, and no unresolved blocking/error/warning observations. Finalisation freezes the reporting-period state and appends an audit event; reopen controls are an extension point for a production release.
 
-## 4. Removing local data
+## 5. Removing local data
 
-Use **Reset synthetic demo** only when you intentionally want to discard the local workspace and recreate the bundled demonstration. Alternatively, clear site data in the browser. Export a verified encrypted backup first if the workspace must be recoverable.
+Use the globally available **Reset all data** control at the bottom of the sidebar only when every company workspace in the current browser origin should be discarded. White Horse asks once for confirmation and lists the records that will be removed. Confirming clears companies, periods, imports, ledgers, mappings, adjustments, adjustment lines, validations, notes, audit events, and local users in one transaction; it then restores only the synthetic factory workspace and signs out.
 
-## 5. Common issues
+The reset cannot be undone inside White Horse. Export and verify an encrypted backup first if any company, workpaper, signing setting or audit history must remain recoverable. **Cancel** closes the confirmation without changing data. Clearing site data in the browser has a similar destructive result but may also remove the cached application shell.
+
+## 6. Common issues
 
 | Symptom | Likely cause | Safest action |
 | --- | --- | --- |
@@ -94,3 +106,6 @@ Use **Reset synthetic demo** only when you intentionally want to discard the loc
 | A deployed update is available but an old screen remains open | The service worker preserves the current shell until it is safe to update | Save/export work, select **Update** when prompted, or close and reopen the site; do not clear site data unless a backup exists |
 | Complete-financials export is blocked | No active TB or one or more ledgers are unmapped | Activate a balanced TB, complete mapping, then generate again |
 | PDF button opens a print dialog instead of downloading immediately | PDF generation uses the browser's standards-based print engine | Choose **Save as PDF**, select the destination, and review the saved document before circulation |
+| Login works but confidential data is not protected | The public static login is only a study cover | Use synthetic data; implement backend identity/authorisation before real use |
+| Automatic note says `REQUIRES WORKPAPER` | Required legal/register/ageing facts cannot be inferred from closing balances | Complete the named Schedule III workpaper and have it reviewed |
+| Reset confirmation is open unintentionally | The global reset control was selected | Choose **Cancel**; no records are deleted until the single confirmation is accepted |

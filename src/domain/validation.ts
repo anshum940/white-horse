@@ -78,7 +78,76 @@ export function validateWorkspace(context: ValidationContext): ValidationResult[
     );
   }
 
-  const mappingByLedger = new Map(context.mappings.map((mapping) => [mapping.ledgerId, mapping]));
+  const comparativeTbDifference = sumMoney(context.ledgers.map((ledger) => ledger.signedComparativePaise));
+  if (comparativeTbDifference !== 0) {
+    results.push(
+      finding(
+        context,
+        'TB-002',
+        'BLOCKING',
+        'Comparative Trial Balance does not balance',
+        'Comparative-period debits and credits differ in the active import.',
+        `Signed comparative difference: ${comparativeTbDifference} paise.`,
+        'Correct the comparative source balances or column/sign mapping before relying on comparative statements.',
+        {
+          amountPaise: comparativeTbDifference,
+          entityType: 'TB_IMPORT',
+          entityId: context.ledgers[0]?.importId
+        }
+      )
+    );
+  }
+
+  const ledgersByCode = new Map<string, LedgerAccount[]>();
+  for (const ledger of context.ledgers) {
+    const codeKey = ledger.code.trim().toLocaleLowerCase('en-IN');
+    const matchingLedgers = ledgersByCode.get(codeKey) ?? [];
+    matchingLedgers.push(ledger);
+    ledgersByCode.set(codeKey, matchingLedgers);
+  }
+  for (const duplicateLedgers of ledgersByCode.values()) {
+    if (duplicateLedgers.length < 2) continue;
+    const [firstLedger] = duplicateLedgers;
+    if (!firstLedger) continue;
+    results.push(
+      finding(
+        context,
+        'TB-003',
+        'ERROR',
+        'Duplicate ledger code detected',
+        `Ledger code ${firstLedger.code} occurs ${duplicateLedgers.length} times in the active Trial Balance.`,
+        duplicateLedgers.map((ledger) => `${ledger.sourceRow}: ${ledger.name}`).join('; '),
+        'Assign a unique stable ledger code to every imported row and re-import the Trial Balance.',
+        { entityType: 'LEDGER', entityId: firstLedger.id }
+      )
+    );
+  }
+
+  const mappingsByLedger = new Map<string, LedgerMapping[]>();
+  for (const mapping of context.mappings) {
+    const ledgerMappings = mappingsByLedger.get(mapping.ledgerId) ?? [];
+    ledgerMappings.push(mapping);
+    mappingsByLedger.set(mapping.ledgerId, ledgerMappings);
+  }
+  const mappingByLedger = new Map<string, LedgerMapping>();
+  for (const [ledgerId, ledgerMappings] of mappingsByLedger) {
+    const [firstMapping] = ledgerMappings;
+    if (!firstMapping) continue;
+    mappingByLedger.set(ledgerId, firstMapping);
+    if (ledgerMappings.length < 2) continue;
+    results.push(
+      finding(
+        context,
+        'MAP-004',
+        'BLOCKING',
+        'Ledger has more than one statement mapping',
+        `A single ledger is mapped to ${ledgerMappings.length} taxonomy heads, which can duplicate its reported balance.`,
+        ledgerMappings.map((mapping) => mapping.taxonomyCode).join(', '),
+        'Retain exactly one reviewed taxonomy mapping for the ledger before generating statements.',
+        { entityType: 'LEDGER', entityId: ledgerId }
+      )
+    );
+  }
   const taxonomyByCode = new Map(context.taxonomy.map((node) => [node.code, node]));
   for (const ledger of context.ledgers) {
     const mapping = mappingByLedger.get(ledger.id);
@@ -92,6 +161,21 @@ export function validateWorkspace(context: ValidationContext): ValidationResult[
           `${ledger.code} · ${ledger.name} has no approved statement mapping.`,
           `Absolute balance: ${Math.abs(ledger.signedCurrentPaise)} paise.`,
           'Map the ledger to an active leaf taxonomy node and submit it for review.',
+          { amountPaise: ledger.signedCurrentPaise, entityType: 'LEDGER', entityId: ledger.id }
+        )
+      );
+      continue;
+    }
+    if (!mapping && ledger.signedCurrentPaise !== 0) {
+      results.push(
+        finding(
+          context,
+          'MAP-005',
+          'WARNING',
+          'Non-zero ledger is unmapped',
+          `${ledger.code} · ${ledger.name} is below materiality but is excluded from the financial statements.`,
+          `Absolute balance: ${Math.abs(ledger.signedCurrentPaise)} paise.`,
+          'Map or explicitly clear the ledger so completeness is documented before finalisation.',
           { amountPaise: ledger.signedCurrentPaise, entityType: 'LEDGER', entityId: ledger.id }
         )
       );
@@ -131,10 +215,49 @@ export function validateWorkspace(context: ValidationContext): ValidationResult[
     }
   }
 
+  const ledgerIds = new Set(context.ledgers.map((ledger) => ledger.id));
   for (const adjustment of context.adjustments) {
     const lines = context.adjustmentLines.filter((line) => line.adjustmentId === adjustment.id);
     const debit = sumMoney(lines.map((line) => line.debitPaise));
     const credit = sumMoney(lines.map((line) => line.creditPaise));
+    const malformedLines = lines.filter(
+      (line) =>
+        line.debitPaise < 0 ||
+        line.creditPaise < 0 ||
+        (line.debitPaise > 0 && line.creditPaise > 0) ||
+        (line.debitPaise === 0 && line.creditPaise === 0)
+    );
+    if (lines.length < 2 || malformedLines.length > 0) {
+      results.push(
+        finding(
+          context,
+          'ADJ-002',
+          'BLOCKING',
+          'Adjustment journal structure is invalid',
+          `${adjustment.referenceNumber} must contain at least two lines, with one non-negative debit or credit amount on each line.`,
+          lines.length < 2
+            ? `Journal line count: ${lines.length}.`
+            : `Invalid line numbers: ${malformedLines.map((line) => line.lineNumber).join(', ')}.`,
+          'Correct the journal structure before submission, approval or posting.',
+          { entityType: 'ADJUSTMENT', entityId: adjustment.id }
+        )
+      );
+    }
+    const orphanedLines = lines.filter((line) => !ledgerIds.has(line.ledgerId));
+    if (orphanedLines.length > 0) {
+      results.push(
+        finding(
+          context,
+          'ADJ-004',
+          'ERROR',
+          'Adjustment references an unavailable ledger',
+          `${adjustment.referenceNumber} contains ${orphanedLines.length} line${orphanedLines.length === 1 ? '' : 's'} that cannot be posted to the active Trial Balance.`,
+          orphanedLines.map((line) => `Line ${line.lineNumber}: ${line.ledgerId}`).join('; '),
+          'Select valid active ledgers or reverse and recreate the adjustment after re-importing the Trial Balance.',
+          { entityType: 'ADJUSTMENT', entityId: adjustment.id }
+        )
+      );
+    }
     if (debit !== credit) {
       results.push(
         finding(
@@ -177,6 +300,24 @@ export function validateWorkspace(context: ValidationContext): ValidationResult[
         `Difference: ${statements.totals.balanceSheetDifference} paise.`,
         'Trace missing mappings, normal-balance signs, adjustments, and the profit bridge.',
         { amountPaise: statements.totals.balanceSheetDifference, entityType: 'STATEMENT', entityId: 'BALANCE_SHEET' }
+      )
+    );
+  }
+  if (statements.totals.comparativeBalanceSheetDifference !== 0) {
+    results.push(
+      finding(
+        context,
+        'BS-002',
+        'BLOCKING',
+        'Comparative Balance Sheet does not balance',
+        'Comparative total assets do not equal comparative total equity and liabilities after the profit bridge.',
+        `Comparative difference: ${statements.totals.comparativeBalanceSheetDifference} paise.`,
+        'Trace comparative mappings, normal-balance signs and the comparative profit bridge before finalisation.',
+        {
+          amountPaise: statements.totals.comparativeBalanceSheetDifference,
+          entityType: 'STATEMENT',
+          entityId: 'BALANCE_SHEET'
+        }
       )
     );
   }

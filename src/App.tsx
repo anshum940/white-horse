@@ -1,12 +1,14 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { listCompanyWorkspaces, loadWorkspace } from './db';
+import { initializeDatabase, listCompanyWorkspaces, loadWorkspace, resetAllWorkspaceData } from './db';
 import { taxonomy } from './data/taxonomy';
+import { endDemoAccessSession, hasDemoAccessSession, startDemoAccessSession } from './domain/demoAuthentication';
 import { calculateFinancialStatements, calculateKpis } from './domain/statements';
 import { validateWorkspace } from './domain/validation';
 import type { ValidationResult } from './domain/types';
 import { Icon, type IconName } from './components/Icon';
+import { LoginCover } from './components/LoginCover';
 import { Modal, StatusBadge } from './components/ui';
 
 const OverviewPage = lazy(() => import('./pages/OverviewPage').then((module) => ({ default: module.OverviewPage })));
@@ -43,6 +45,42 @@ function currentHash(): PageId {
 }
 
 export default function App() {
+  const [authenticated, setAuthenticated] = useState(hasDemoAccessSession);
+
+  if (!authenticated) {
+    return <LoginCover onAuthenticated={() => { startDemoAccessSession(); setAuthenticated(true); }}/>;
+  }
+
+  return <AuthenticatedApplication onLogout={() => { endDemoAccessSession(); setAuthenticated(false); }}/>;
+}
+
+function AuthenticatedApplication({ onLogout }: { onLogout: () => void }) {
+  const [databaseState, setDatabaseState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
+  const [databaseError, setDatabaseError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    void initializeDatabase()
+      .then(() => { if (active) setDatabaseState('READY'); })
+      .catch((error) => {
+        if (!active) return;
+        setDatabaseError(error instanceof Error ? error.message : 'Unknown database error');
+        setDatabaseState('ERROR');
+      });
+    return () => { active = false; };
+  }, []);
+
+  if (databaseState === 'ERROR') {
+    return <main className="app-startup-error"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt="White Horse"/><h1>White Horse could not open the local workspace</h1><p>{databaseError}</p><p>No data was uploaded or changed. Reload the page or restore a verified backup.</p><button className="button button-secondary" onClick={onLogout}>Return to login</button></main>;
+  }
+  if (databaseState !== 'READY') {
+    return <div className="app-loading"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt="White Horse"/><strong>Preparing your local workspace…</strong><span>Opening the browser-local data layer</span></div>;
+  }
+
+  return <WorkspaceApplication onLogout={onLogout}/>;
+}
+
+function WorkspaceApplication({ onLogout }: { onLogout: () => void }) {
   const [activeCompanyId, setActiveCompanyId] = useState(() => localStorage.getItem('white-horse-active-company') ?? 'demo-company');
   const companies = useLiveQuery(() => listCompanyWorkspaces(), []);
   const workspace = useLiveQuery(() => loadWorkspace(activeCompanyId), [activeCompanyId]);
@@ -54,6 +92,8 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -132,6 +172,20 @@ export default function App() {
     setToast({ message, tone });
   }
 
+  async function resetAllData() {
+    setResetBusy(true);
+    try {
+      await resetAllWorkspaceData();
+      localStorage.setItem('white-horse-active-company', 'demo-company');
+      setResetOpen(false);
+      onLogout();
+    } catch (error) {
+      setResetBusy(false);
+      setResetOpen(false);
+      notify(error instanceof Error ? error.message : 'White Horse could not reset the browser-local data.', 'error');
+    }
+  }
+
   if (workspace === undefined || computed === undefined || companies === undefined) {
     return <div className="app-loading"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt="White Horse"/><strong>Preparing your local workspace…</strong><span>Opening the browser-local data layer</span></div>;
   }
@@ -181,6 +235,7 @@ export default function App() {
         </nav>
         <div className="sidebar-footer">
           <div className="local-only"><Icon name="database" size={15}/><span><strong>Local-only data</strong><small>{online ? 'App connected · data stays here' : 'Offline mode active'}</small></span></div>
+          <button className="reset-data-button" onClick={() => setResetOpen(true)}><Icon name="error" size={15}/><span>Reset all data</span></button>
           <button className="user-menu" onClick={() => setUserOpen(true)}><span className="user-avatar">{preparerInitials}</span><span><strong>{preparerName}</strong><small>{preparer?.role.toLowerCase() ?? 'preparer'}</small></span><Icon name="more" size={16}/></button>
         </div>
       </aside>
@@ -194,7 +249,8 @@ export default function App() {
       {companySwitcherOpen && <Modal title="Switch company workspace" description="Each company and reporting period is stored independently in this browser." onClose={() => setCompanySwitcherOpen(false)} footer={<button className="button button-primary" onClick={() => { setCompanySwitcherOpen(false); navigate('company'); }}>Manage or create companies</button>}><div className="workspace-switch-list">{companies.map((company) => <button key={company.companyId} className={company.companyId === workspace.company.id ? 'active' : ''} onClick={() => selectCompany(company.companyId)}><span className="company-monogram">{company.tradeName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</span><span><strong>{company.tradeName}</strong><small>{company.legalName} · {company.periodLabel}</small></span><StatusBadge tone={company.companyId === workspace.company.id ? 'green' : 'neutral'}>{company.companyId === workspace.company.id ? 'CURRENT' : company.status.replaceAll('_', ' ')}</StatusBadge></button>)}</div></Modal>}
       {searchOpen && <Modal title="Search workspace" description="Find a page, Trial Balance ledger or disclosure note." onClose={() => { setSearchOpen(false); setSearchQuery(''); }}><label className="search-field global-search"><Icon name="search" size={16}/><input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search pages, ledgers and notes…"/></label><div className="global-search-results">{searchableItems.map((item) => <button key={item.id} onClick={() => { navigate(item.page); setSearchOpen(false); setSearchQuery(''); }}><span><strong>{item.label}</strong><small>{item.detail}</small></span><Icon name="chevron" size={15}/></button>)}{searchableItems.length === 0 && <p>No matching page, ledger or note was found.</p>}</div></Modal>}
       {notificationOpen && <Modal title="Review notifications" description={`${openNotifications.length} open validation result${openNotifications.length === 1 ? '' : 's'} for ${workspace.company.tradeName}.`} onClose={() => setNotificationOpen(false)} footer={<button className="button button-primary" onClick={() => { setNotificationOpen(false); navigate('review'); }}>Open review centre</button>}><div className="notification-list">{openNotifications.slice(0, 10).map((item) => <button key={item.id} onClick={() => { setNotificationOpen(false); navigate('review'); }}><span className={`attention-icon severity-${item.severity.toLowerCase()}`}><Icon name={item.severity === 'INFO' ? 'info' : item.severity === 'WARNING' ? 'warning' : 'error'} size={16}/></span><span><strong>{item.title}</strong><small>{item.ruleId} · {item.severity}</small></span><Icon name="chevron" size={15}/></button>)}{openNotifications.length === 0 && <div className="empty-list"><Icon name="check" size={24}/><h3>No open notifications</h3><p>The current validation view has no open results.</p></div>}</div></Modal>}
-      {userOpen && <Modal title={preparerName} description="Active local workspace identity" onClose={() => setUserOpen(false)} footer={<button className="button button-primary" onClick={() => { setUserOpen(false); navigate('company'); }}>Manage local users</button>}><div className="profile-summary"><span className="user-avatar profile-avatar">{preparerInitials}</span><div><strong>{preparerName}</strong><p>@{preparer?.username ?? 'abhijit'} · {preparer?.role ?? 'PREPARER'}</p><small>This identity is browser-local and is not connected to your GitHub account or contacts.</small></div></div></Modal>}
+      {userOpen && <Modal title={preparerName} description="Active local workspace identity" onClose={() => setUserOpen(false)} footer={<><button className="button button-secondary" onClick={() => { setUserOpen(false); onLogout(); }}>Sign out</button><button className="button button-primary" onClick={() => { setUserOpen(false); navigate('company'); }}>Manage local users</button></>}><div className="profile-summary"><span className="user-avatar profile-avatar">{preparerInitials}</span><div><strong>{preparerName}</strong><p>@{preparer?.username ?? 'abhijit'} · {preparer?.role ?? 'PREPARER'}</p><small>This identity is browser-local and is not connected to your GitHub account or contacts.</small></div></div></Modal>}
+      {resetOpen && <Modal title="Reset all White Horse data?" description="This is the single confirmation step for a complete browser-local factory reset." onClose={() => !resetBusy && setResetOpen(false)} footer={<><button className="button button-secondary" disabled={resetBusy} onClick={() => setResetOpen(false)}>Cancel</button><button className="button button-danger" disabled={resetBusy} onClick={() => void resetAllData()}>{resetBusy ? 'Resetting…' : 'Reset all data'}</button></>}><div className="reset-confirmation"><span><Icon name="warning" size={22}/></span><div><strong>This action cannot be undone</strong><p>Every company, Trial Balance, mapping, adjustment, note, validation, local user and audit event stored by White Horse in this browser will be deleted. The synthetic factory workspace will be restored and you will be signed out.</p><small>Create and verify an encrypted backup first if any workspace must be recoverable.</small></div></div></Modal>}
       {toast && <div className={`toast toast-${toast.tone}`} role="status"><Icon name={toast.tone === 'success' ? 'check' : 'error'} size={17}/><span>{toast.message}</span><button onClick={() => setToast(undefined)} aria-label="Dismiss"><Icon name="close" size={14}/></button></div>}
       {(offlineReady || needRefresh) && <div className="update-toast"><Icon name={offlineReady ? 'wifi-off' : 'info'}/><div><strong>{offlineReady ? 'White Horse is ready offline' : 'A verified update is available'}</strong><span>{offlineReady ? 'The application shell is cached on this device.' : 'Update after saving or exporting current work.'}</span></div>{needRefresh && <button className="button button-primary" onClick={() => void updateServiceWorker(true)}>Update</button>}<button className="icon-button" onClick={() => { setOfflineReady(false); setNeedRefresh(false); }}><Icon name="close"/></button></div>}
     </div>

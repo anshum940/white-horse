@@ -101,6 +101,20 @@ async function maintainSeedData(): Promise<void> {
   }
 }
 
+async function addFactoryDataset(): Promise<void> {
+  await db.companies.add(demoCompany);
+  await db.periods.add(demoPeriod);
+  await db.imports.add(demoImport);
+  await db.ledgers.bulkAdd(demoLedgers);
+  await db.mappings.bulkAdd(demoMappings);
+  await db.adjustments.bulkAdd(demoAdjustments);
+  await db.adjustmentLines.bulkAdd(demoAdjustmentLines);
+  await db.validations.bulkAdd(demoValidations);
+  await db.notes.bulkAdd(demoNotes);
+  await db.auditEvents.bulkAdd(demoAuditEvents);
+  await db.users.bulkAdd(demoUsers);
+}
+
 export async function initializeDatabase(): Promise<void> {
   const exists = await db.companies.get(demoCompany.id);
   if (exists) {
@@ -123,17 +137,7 @@ export async function initializeDatabase(): Promise<void> {
       db.users
     ],
     async () => {
-      await db.companies.add(demoCompany);
-      await db.periods.add(demoPeriod);
-      await db.imports.add(demoImport);
-      await db.ledgers.bulkAdd(demoLedgers);
-      await db.mappings.bulkAdd(demoMappings);
-      await db.adjustments.bulkAdd(demoAdjustments);
-      await db.adjustmentLines.bulkAdd(demoAdjustmentLines);
-      await db.validations.bulkAdd(demoValidations);
-      await db.notes.bulkAdd(demoNotes);
-      await db.auditEvents.bulkAdd(demoAuditEvents);
-      await db.users.bulkAdd(demoUsers);
+      await addFactoryDataset();
     }
   );
 }
@@ -716,4 +720,24 @@ export async function resetDemoData(): Promise<void> {
     }
   );
   await initializeDatabase();
+}
+
+export async function resetAllWorkspaceData(): Promise<void> {
+  const tables = [
+    db.companies,
+    db.periods,
+    db.imports,
+    db.ledgers,
+    db.mappings,
+    db.adjustments,
+    db.adjustmentLines,
+    db.validations,
+    db.notes,
+    db.auditEvents,
+    db.users
+  ];
+  await db.transaction('rw', tables, async () => {
+    for (const table of tables) await table.clear();
+    await addFactoryDataset();
+  });
 }

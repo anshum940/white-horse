@@ -34,6 +34,32 @@ describe('validation engine', () => {
     expect(ragStatus(results)).toBe('RED');
   });
 
+  it('blocks an unbalanced comparative TB', () => {
+    const broken = {
+      ...context,
+      ledgers: context.ledgers.map((ledger, index) =>
+        index === 0 ? { ...ledger, signedComparativePaise: ledger.signedComparativePaise + 1 } : ledger
+      )
+    };
+    const results = validateWorkspace(broken);
+    expect(results.some((result) => result.ruleId === 'TB-002' && result.severity === 'BLOCKING')).toBe(true);
+    expect(ragStatus(results)).toBe('RED');
+  });
+
+  it('blocks duplicate mappings for one ledger', () => {
+    const [firstMapping, secondMapping] = context.mappings;
+    if (!firstMapping || !secondMapping) throw new Error('The synthetic validation fixture needs at least two mappings.');
+    const duplicate = {
+      ...context,
+      mappings: [
+        ...context.mappings,
+        { ...firstMapping, id: 'mapping-duplicate', taxonomyCode: secondMapping.taxonomyCode }
+      ]
+    };
+    const results = validateWorkspace(duplicate);
+    expect(results.some((result) => result.ruleId === 'MAP-004' && result.severity === 'BLOCKING')).toBe(true);
+  });
+
   it('blocks an unbalanced adjustment independently of posting state', () => {
     const broken = {
       ...context,
@@ -43,5 +69,19 @@ describe('validation engine', () => {
     };
     const results = validateWorkspace(broken);
     expect(results.some((result) => result.ruleId === 'ADJ-001')).toBe(true);
+  });
+
+  it('blocks malformed journal lines and identifies unavailable ledgers', () => {
+    const broken = {
+      ...context,
+      adjustmentLines: context.adjustmentLines.map((line, index) =>
+        index === 0
+          ? { ...line, ledgerId: 'missing-ledger', debitPaise: 100, creditPaise: 100 }
+          : line
+      )
+    };
+    const results = validateWorkspace(broken);
+    expect(results.some((result) => result.ruleId === 'ADJ-002' && result.severity === 'BLOCKING')).toBe(true);
+    expect(results.some((result) => result.ruleId === 'ADJ-004' && result.severity === 'ERROR')).toBe(true);
   });
 });

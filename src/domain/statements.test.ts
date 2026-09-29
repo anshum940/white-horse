@@ -19,6 +19,11 @@ describe('financial statement engine', () => {
     expect(statements.totals.totalAssets).toBe(3_100_000_000);
     expect(statements.totals.balanceSheetDifference).toBe(0);
     expect(statements.totals.comparativeBalanceSheetDifference).toBe(0);
+    expect(statements.balanceSheet[0]?.code).toBe('BS-EQUITY-LIABILITIES');
+    expect(statements.balanceSheet.findIndex((line) => line.code === 'BS-TOTAL-EQUITY-LIABILITIES')).toBeLessThan(
+      statements.balanceSheet.findIndex((line) => line.code === 'BS-ASSETS')
+    );
+    expect(statements.balanceSheet.at(-1)?.code).toBe('BS-TOTAL-ASSETS');
   });
 
   it('reconciles indirect cash flow to the cash balance movement', () => {

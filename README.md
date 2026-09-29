@@ -4,6 +4,10 @@ White Horse is a local-first, multi-company financial-statement preparation work
 
 **Live HTTPS demo:** https://anshum940.github.io/white-horse/
 
+**Study access:** username `admin`, password `admin123`.
+
+The login is a polished client-side cover for the public study demo, not a security boundary. Because GitHub Pages serves a public static application, a determined visitor can inspect or bypass client code. Do not place confidential data behind this demo credential. Commercial production requires server-enforced identity, secure sessions, tenant authorisation, protected APIs, rate limiting, monitoring, and recovery controls.
+
 > **Important:** White Horse is a preparation and study aid, not a substitute for professional judgement, statutory audit, legal advice, or an up-to-date disclosure checklist. The supplied demo must not be used for statutory filing.
 
 ## What it demonstrates
@@ -12,14 +16,17 @@ White Horse is a local-first, multi-company financial-statement preparation work
 - A vendor-neutral, eight-column Standard TB template (`WH-TB-1.0`) in CSV and XLSX for the most repeatable import path
 - Three parser-verified, balanced `WH-TB-1.0` sample workbooks for manufacturing, digital services, and food distribution demonstrations
 - Independent company workspaces, reporting periods, materiality settings, display scales, and local role records
+- A branded White Horse study-access cover, tab-scoped access marker, sign-out, and an explicitly labelled public-demo security boundary
 - 21-character CIN format controls, non-overlapping comparative periods, and current financial-year defaults
 - Ledger-to-taxonomy mapping with current/non-current and cash-flow classifications
 - Balanced adjustment journals with preparer/reviewer states and workpaper references
-- Deterministic Balance Sheet, Profit and Loss, and indirect Cash Flow statements
-- Thirty structured notes/disclosure workpapers, ledger-level comparative note schedules, truthful PPE/intangible net carrying-amount bridges, and twelve transparent analytical ratios
+- Deterministic Balance Sheet, Profit and Loss, and indirect Cash Flow statements, with Equity and Liabilities presented before Assets
+- Thirty structured notes/disclosure workpapers, factual company/data-derived disclosure text, ledger-level comparative schedules, truthful PPE/intangible net carrying-amount bridges, and twelve transparent analytical ratios
+- Blocking comparative-TB, duplicate-mapping, malformed-journal, orphan-ledger, and comparative-Balance-Sheet controls in addition to current-period reconciliations
 - Comparative notes, review rules, finalisation gates, and hash-linked audit events
 - One-click 11-sheet Excel pack, CSV extracts, a six-section A4 browser PDF pack, optional Director/CA signing blocks, plain backup, and PBKDF2/AES-GCM encrypted backup flows
 - IndexedDB persistence and a service-worker application shell for offline use
+- A global, once-confirmed factory reset that atomically removes every browser-local workspace and restores only the synthetic demonstration
 
 ## Trial Balance import
 
@@ -44,6 +51,8 @@ Verified synthetic workbooks: [Meridian Manufacturing](public/samples/Sample_Mer
 The hosted site is static. Trial Balances and workspace records are processed and stored in the current browser's IndexedDB database; they are not sent to an application server. Each browser/profile has a separate workspace. Created companies survive ordinary page reloads, browser restarts, and White Horse application deployments on that same site origin and profile. They are not cloud-synchronised and can still be lost if site data is cleared, a private session ends, storage is evicted/corrupted, or a different browser/profile/device is used. Company Setup reports the browser's persistence mode and can request persistent storage where supported; encrypted backups remain mandatory for recovery. GitHub Pages still serves the public application files and may process ordinary request metadata under GitHub's policies.
 
 Browser storage is not a substitute for endpoint encryption or access control. Use the synthetic sample for public demonstrations. If real data is ever used in a controlled environment, protect the device and browser profile, create encrypted backups, and clear site data when the engagement ends.
+
+**Reset all data** irreversibly removes every company, Trial Balance, mapping, adjustment, note, validation, local role, signature setting, and audit event stored by White Horse in the current browser origin. The operation asks once for confirmation, completes as one IndexedDB transaction, restores only the synthetic factory workspace, and signs the user out. Export and verify an encrypted backup first if recovery may be required.
 
 This is not yet a hosted multi-user SaaS service. Before commercial production use, add independently tested authentication/authorisation, server-side tenant isolation and backup, monitoring, support operations, a privacy/compliance programme, and professionally validated taxonomy/rule packs for every framework and sector offered. Division II, Division III, consolidated, banking, insurance, and other regulated-sector reporting are not included in this release.
 
@@ -77,14 +86,16 @@ npm run preview
 
 ## Study demo flow
 
-1. Open **Company setup** to show the legal identity, period, framework, local roles, and the new-company workflow.
-2. Open **Trial Balance → Import Trial Balance** and upload a ledger-level `.xlsx`, `.csv`, `.tsv`, or delimited `.txt` export. Review the detected worksheet/header and use the mapper when headings are ambiguous. The standard CSV/XLSX template remains available as a controlled fallback.
-3. Download and import one of the three verified synthetic XLSX examples from the dialog, or preview [the synthetic CSV](samples/saffron-trial-balance.csv). Do not activate a sample unless you intend to create a new local import version.
-4. Review mapping status and posted/submitted adjustments.
-5. Open **Review & validation** to run deterministic controls and inspect evidence.
-6. Open **Financial statements**, switch among statements, and select a line for ledger drill-down.
-7. Use **PDF & signatures** to configure optional Director/DIN and CA/membership text blocks for the reporting period. Select **Export PDF**, then choose **Save as PDF** in the browser print dialog, or select **Generate complete financials** for the 11-sheet working-paper pack.
-8. Open **Finalisation** to demonstrate the unresolved-matter gate and encrypted backup.
+1. Enter `admin` / `admin123` on the White Horse study-access cover. The access marker lasts only for the current browser tab session.
+2. Open **Company setup** to show the legal identity, period, framework, local roles, and the new-company workflow.
+3. Open **Trial Balance → Import Trial Balance** and upload a ledger-level `.xlsx`, `.csv`, `.tsv`, or delimited `.txt` export. Review the detected worksheet/header and use the mapper when headings are ambiguous. The standard CSV/XLSX template remains available as a controlled fallback.
+4. Download and import one of the three verified synthetic XLSX examples from the dialog, or preview [the synthetic CSV](samples/saffron-trial-balance.csv). Do not activate a sample unless you intend to create a new local import version.
+5. Review mapping status and posted/submitted adjustments.
+6. Open **Review & validation** to run deterministic controls and inspect evidence.
+7. Open **Financial statements**, verify the Equity and Liabilities-first Balance Sheet, switch among statements, and select a line for ledger drill-down.
+8. Open **Notes & accounting policies** to review the generated company-specific text, reconciled schedule, and the explicit workpaper requirement for information that a TB cannot prove.
+9. Use **PDF & signatures** to configure optional Director/DIN and CA/membership text blocks for the reporting period. Select **Export PDF**, then choose **Save as PDF** in the browser print dialog, or select **Generate complete financials** for the 11-sheet working-paper pack.
+10. Open **Finalisation** to demonstrate the unresolved-matter gate and encrypted backup. Use **Reset all data** only after a verified backup and only when every local workspace should be deleted.
 
 ## Documentation
 

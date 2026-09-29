@@ -41,10 +41,13 @@ describe('financial PDF print pack', () => {
     expect(html).toContain('Statement of Profit and Loss');
     expect(html).toContain('Cash Flow Statement');
     expect(html).toContain('Notes to Accounts');
+    expect(html).toContain('Automatic company disclosure');
+    expect(html).toContain(workspace.company.cin);
     expect(html).toContain('Analytical ratio schedule');
     expect(html).toContain('Asha Rao');
     expect(html).toContain('DIN: 12345678');
     expect(html).toContain('Vikram Rao');
     expect(html).toContain('Membership No.: 123456');
+    expect(html.indexOf('EQUITY AND LIABILITIES')).toBeLessThan(html.indexOf('ASSETS'));
   });
 });

@@ -97,6 +97,10 @@ export function FinancialPdfPack({ workspace, statements, kpis }: { workspace: W
                   <h3>{note.title}</h3>
                   <em className={`pdf-note-status status-${note.status.toLowerCase().replaceAll('_', '-')}`}>{note.status.replaceAll('_', ' ')}</em>
                 </header>
+                <div className={`pdf-note-auto auto-${schedule.automaticDisclosure.status.toLowerCase().replaceAll('_', '-')}`}>
+                  <strong>Automatic company disclosure · {schedule.automaticDisclosure.status.replaceAll('_', ' ')}</strong>
+                  {schedule.automaticDisclosure.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                </div>
                 {schedule.rows.length > 0 && (
                   <table className="pdf-note-table">
                     <thead><tr><th>Particulars</th><th>{workspace.period.label}</th><th>{workspace.period.comparativeLabel}</th></tr></thead>
