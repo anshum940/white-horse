@@ -1776,3 +1776,13 @@ The first fresh `gh auth login --web` attempt could not reach GitHub's device en
 The post-login checks confirmed the active keyring account is `anshum940`, GitHub API user ID `105625445`, HTTPS Git operations and the required `repo`/`workflow` scopes. Other keyring accounts were inactive. The first elevated `git fetch origin main` invocation hit Git's dubious-ownership protection because the managed workspace is owned by the isolated sandbox identity while the approved network command runs as the desktop user. No global Git setting was changed. The safe retry used a one-command `-c safe.directory=C:/Users/anshu/Documents/Personal/CA-project` override and fetched successfully. Local `HEAD` and `origin/main` both resolved to `8f0ccb4c1c6e9b6d00bde976373c3af0a17a5f41`, confirming no remote divergence before commit.
 
 The first sandboxed staging command could read the repository but could not create `.git/index.lock`, because `.git` is intentionally read-only to the restricted workspace identity. It staged nothing. The exact reviewed file list was retried with approved repository write access and the same one-command safe-directory override. All 27 intended files were staged, `git diff --cached --check` passed, and the staged scope contains 1,009 insertions and 92 deletions with no unrelated or QA-only file.
+
+The reviewed implementation commit was then created locally:
+
+```text
+0c29b6d feat: add access cover and reporting controls
+27 files changed, 1,011 insertions(+), 92 deletions(-)
+4 new files: LoginCover component/test and demoAuthentication module/test
+```
+
+The two additional insertions relative to the first staged summary are this continuously maintained staging/error record. A documentation-only follow-up records the commit before both commits are pushed together, allowing one Pages workflow to verify the complete source and its project log.
