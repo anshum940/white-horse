@@ -10,22 +10,22 @@ export interface NoteTemplateInput {
   demo?: boolean;
 }
 
-const disclosureGuidance: Record<string, string> = {
-  '3': 'Reconcile opening gross block, additions, disposals, depreciation, impairment and closing net block to the fixed-asset register.',
-  '4': 'Reconcile opening balance, additions, disposals, amortisation, impairment and closing balance for each class of intangible asset.',
+export const divisionIDisclosureGuidance: Record<string, string> = {
+  '3': 'Present each class of property, plant and equipment separately. Reconcile opening and closing gross carrying amount and accumulated depreciation/impairment, showing additions, disposals, business-combination movements, other adjustments, depreciation and impairment or reversals. Complete title-deed and capital-work-in-progress disclosures where applicable.',
+  '4': 'Present each class of intangible asset separately. Reconcile opening and closing gross carrying amount and accumulated amortisation/impairment, showing additions, disposals, business-combination movements, other adjustments, amortisation and impairment or reversals.',
   '5': 'Disclose class, quoted/unquoted status, carrying amount, market value where applicable and impairment for investments.',
   '6': 'Explain the components and recognition basis of deferred tax assets and liabilities, including recoverability evidence.',
   '7': 'Disclose inventory classes, valuation policy, write-downs and any pledged inventory.',
-  '8': 'Complete the trade-receivable ageing schedule, credit-risk assessment, disputed balances and related-party information.',
+  '8': 'Complete the prescribed trade-receivable ageing schedule from due date (or transaction date where no due date exists), including disputed balances, credit-risk categories, unbilled dues and related-party information.',
   '9': 'Reconcile bank and cash balances and disclose restrictions, earmarked balances and deposit classifications where applicable.',
   '10': 'Describe material prepayments and their expected recognition period.',
   '11': 'Explain material other current assets, advances and recoverability considerations.',
-  '12': 'Complete authorised, issued, subscribed and paid-up capital, reconciliation, rights, promoter shareholding and five-year issue history.',
+  '12': 'Complete authorised, issued, subscribed and paid-up capital, a share-count and amount reconciliation, rights/preferences/restrictions, holdings above 5%, promoter shareholding and the required five-year issue history.',
   '13': 'Provide a movement schedule and the nature and purpose of each reserve and surplus component.',
   '14': 'Disclose lender, security, repayment terms, interest rate, defaults and current/non-current classification for borrowings.',
   '15': 'Explain the nature, measurement basis and expected timing of long-term provisions.',
   '16': 'Disclose facilities, lender, security, terms, defaults and reconciliation for short-term borrowings.',
-  '17': 'Complete MSME and non-MSME trade-payable ageing, disputed balances and statutory MSME disclosures.',
+  '17': 'Complete the prescribed MSME and other-creditor trade-payable ageing schedules from due date (or transaction date where no due date exists), separately identifying disputed dues, unbilled dues and statutory MSME disclosures.',
   '18': 'Explain material statutory dues, accruals, advances from customers and other current liabilities.',
   '19': 'Provide a movement and utilisation schedule for material short-term provisions.',
   '20': 'Reconcile current-tax liabilities/assets with the tax computation and payments.',
@@ -33,9 +33,9 @@ const disclosureGuidance: Record<string, string> = {
   '22': 'Describe and disaggregate material other-income classes and unusual items.',
   '23': 'Reconcile consumption/purchases to inventory records and explain significant variances.',
   '24': 'Disclose employee-benefit expense classes and cross-reference applicable defined-benefit disclosures.',
-  '25': 'Reconcile depreciation and amortisation to the PPE and intangible-asset schedules.',
-  '26': 'Disclose interest and other finance-cost classes, including capitalised borrowing costs where applicable.',
-  '27': 'Disaggregate material expenses and complete additional Schedule III disclosures applicable to the entity.',
+  '25': 'Disaggregate material other-expense classes and separately disclose exceptional or prior-period items where applicable.',
+  '26': 'Reconcile depreciation and amortisation expense to the property, plant and equipment and intangible-asset schedules.',
+  '27': 'Disclose interest and other finance-cost classes, including capitalised borrowing costs where applicable.',
   '28': 'Reconcile current and deferred tax expense to supporting computations and explain material components.'
 };
 
@@ -89,7 +89,7 @@ export function createDivisionINoteTemplates(input: NoteTemplateInput): NoteDisc
       taxonomyCodes: details.codes,
       status: 'PENDING',
       owner: input.owner,
-      narrative: disclosureGuidance[noteNumber] ?? 'Complete all applicable entity-specific disclosures and reconcile the schedule to the mapped statement balance.',
+      narrative: divisionIDisclosureGuidance[noteNumber] ?? 'Complete all applicable entity-specific disclosures and reconcile the schedule to the mapped statement balance.',
       updatedAt: now
     });
   }

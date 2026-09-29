@@ -57,7 +57,9 @@ Component-wise opening balance, prior-period correction/restatement, owner trans
 - Tax, deferred tax, related parties, commitments/contingencies, MSME, ageing, ratios, and other configured disclosures.
 - Disclosure checklist showing Complete / Not applicable / Pending, owner, evidence, and review status.
 
-The current release provides 30 structured note workpapers, mapped current/comparative totals, status, owner, narrative, and review checklists. Specialised disclosure content requires preparer input and reviewer approval.
+The current release provides 30 structured note workpapers, ledger-level current/comparative schedules, posted-adjustment inclusion, face-statement reconciliation, status, owner, narrative, and review checklists. Credit-normal schedules are displayed as positive disclosure values. Where no underlying ledgers exist, the report uses the matching face-statement line as a controlled fallback rather than suppressing the note.
+
+For PPE and intangible assets, a Trial Balance alone ordinarily provides closing net carrying amounts rather than the complete fixed-asset-register movement data. White Horse therefore presents a mathematically reconciling net carrying-amount bridge (comparative closing amount plus net Trial Balance movement equals current closing amount) and an explicit completion requirement. It does not fabricate gross carrying amount, additions, disposals, depreciation, impairment, class-wise lives, title restrictions, revaluation, CWIP ageing, or other register-dependent disclosures.
 
 ## 4. Control and reconciliation reports
 
@@ -117,7 +119,7 @@ Generation is blocked if no Trial Balance is active or any active ledger is unma
 
 ## 7. Complete browser PDF pack
 
-**Export PDF** opens the browser print dialog for an A4 pack containing a cover, Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, and analytical ratio schedule. The user chooses **Save as PDF** and reviews the resulting file. Browser print was selected to keep generation local, standards-based, accessible, and dependency-light; pixel-identical output across browser engines is not guaranteed.
+**Export PDF** opens the browser print dialog for an A4 pack containing a cover, Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, and analytical ratio schedule. The user chooses **Save as PDF** and reviews the resulting file. The print stylesheet uses professional type hierarchy, aligned comparative columns, repeated note-pack headers on continuation pages, controlled page breaks, and a compact Balance Sheet signing area so enabled Director/CA blocks remain with the statement. Browser print was selected to keep generation local, standards-based, accessible, and dependency-light; pixel-identical output across browser engines is not guaranteed.
 
 Each face statement can show an optional Director block at lower left and Chartered Accountant block at lower right. The settings belong to the reporting period and each block can be hidden independently. The output is an unsigned text/signature-line placeholder, not a handwritten/electronic/digital signature or an auditor's report.
 

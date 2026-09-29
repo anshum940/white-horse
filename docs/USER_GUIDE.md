@@ -31,6 +31,8 @@ Use **Edit setup** to correct the active company/period. Use **Add local user** 
 7. Activation creates a new immutable import version and retains the former import as superseded.
 8. For repeatable client onboarding, select **Standard TB template** and use these row-1 headers: `Ledger Code`, `Ledger Name`, `Group`, `Subgroup`, `Closing Debit`, `Closing Credit`, `Previous Debit`, `Previous Credit`.
 
+The import dialog contains three **Verified sample** downloads: Meridian Manufacturing, BluePeak Digital Services, and GreenTrail Foods. Each workbook is balanced, uses different synthetic ledger data, and imports as the exact standard format without manual mapping. Use them to test the workflow; do not treat their classifications as an engagement template.
+
 Scanned/image PDFs, legacy `.xls`, password-protected or corrupt workbooks, macros, and proprietary accounting database files are outside the adaptive tabular-import boundary. Convert those to a supported export first. The browser does not upload the TB to an application server.
 
 The repository includes `samples/white-horse-tb-template.csv` as the header-only standard format and `samples/saffron-trial-balance.csv` as a populated synthetic demonstration. See `docs/TRIAL_BALANCE_IMPORT_FORMAT.md` for the source-to-standard conversion table, aliases, optional movement/opening columns, limits, and control rules.
@@ -49,7 +51,9 @@ Select **Run all validations** after imports, mappings, or adjustments change. I
 
 ### Statements and notes
 
-Use statement tabs for Balance Sheet, Profit and Loss, and Cash Flow. Select an enabled line to trace its presented value to source ledgers and posted adjustments. Complete all applicable items in the 30-note workbench; mapped current/comparative amounts are shown alongside the narrative. A note cannot be marked Complete until its three review checklist items are selected. Mark genuinely non-applicable disclosures deliberately rather than leaving them blank.
+Use statement tabs for Balance Sheet, Profit and Loss, and Cash Flow. Select an enabled line to trace its presented value to source ledgers and posted adjustments. Complete all applicable items in the 30-note workbench; the PDF note schedules show ledger-level current/comparative amounts, include posted adjustments, and reconcile to the corresponding face-statement total. Credit-normal schedules are presented as positive disclosure amounts.
+
+The PPE and intangible notes show only a defensible net carrying-amount bridge from comparative closing amount to current closing amount when the Trial Balance does not contain asset-register movements. White Horse deliberately does not invent gross block, additions, disposals, depreciation, impairment, or class-wise register information. Complete those disclosures from the fixed-asset register and approved workpapers before marking the note complete. A note cannot be marked Complete until its three review checklist items are selected. Mark genuinely non-applicable disclosures deliberately rather than leaving them blank.
 
 ### Reports and exports
 
@@ -57,7 +61,7 @@ Use statement tabs for Balance Sheet, Profit and Loss, and Cash Flow. Select an 
 - **Generate complete financials** produces an 11-sheet XLSX: Cover, Balance Sheet, Profit and Loss, Cash Flow, Notes to Accounts, Ratios, Trial Balance, Mapping, Adjustments, Validation, and Audit Trail.
 - **Export ratio schedule** downloads all 12 analytical ratios as CSV. An unavailable denominator or missing principal-repayment input is reported as `N/A`, not zero.
 - **PDF & signatures** stores optional signing-block settings for the active company and reporting period. The Director block prints at the lower left with name, designation, and eight-digit DIN. The Chartered Accountant block prints at the lower right with capacity, firm, signing CA, designation, and six-digit ICAI membership number; FRN and UDIN are optional. Each side can be shown or hidden independently.
-- **Export PDF** opens the browser print dialog for a six-section A4 pack: cover, Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, and ratio schedule. Choose **Save as PDF** in the browser. The signing blocks appear on the three face statements when enabled.
+- **Export PDF** opens the browser print dialog for a six-section A4 pack: cover, Balance Sheet, Statement of Profit and Loss, Cash Flow Statement, Notes to Accounts, and ratio schedule. Choose **Save as PDF** in the browser. The professional A4 layout repeats note headers on continuation pages, keeps amount columns aligned, avoids splitting individual note schedules where practical, and places the signing blocks on the three face statements when enabled.
 
 The signing controls print text and an unsigned signature line only. They do not apply a scanned, electronic, or digital signature and do not create an auditor's report. Confirm the signatories required for the entity and period, verify DIN/membership/UDIN against authoritative records, and attach the applicable auditor's report before statutory use. Signature settings are frozen with other reporting-period data after finalisation.
 

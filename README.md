@@ -10,12 +10,13 @@ White Horse is a local-first, multi-company financial-statement preparation work
 
 - Adaptive XLSX/CSV/TSV/TXT Trial Balance preview, worksheet/header detection, manual column mapping, validation, versioned activation, and source-row traceability
 - A vendor-neutral, eight-column Standard TB template (`WH-TB-1.0`) in CSV and XLSX for the most repeatable import path
+- Three parser-verified, balanced `WH-TB-1.0` sample workbooks for manufacturing, digital services, and food distribution demonstrations
 - Independent company workspaces, reporting periods, materiality settings, display scales, and local role records
 - 21-character CIN format controls, non-overlapping comparative periods, and current financial-year defaults
 - Ledger-to-taxonomy mapping with current/non-current and cash-flow classifications
 - Balanced adjustment journals with preparer/reviewer states and workpaper references
 - Deterministic Balance Sheet, Profit and Loss, and indirect Cash Flow statements
-- Thirty structured notes/disclosure workpapers and twelve transparent analytical ratios
+- Thirty structured notes/disclosure workpapers, ledger-level comparative note schedules, truthful PPE/intangible net carrying-amount bridges, and twelve transparent analytical ratios
 - Comparative notes, review rules, finalisation gates, and hash-linked audit events
 - One-click 11-sheet Excel pack, CSV extracts, a six-section A4 browser PDF pack, optional Director/CA signing blocks, plain backup, and PBKDF2/AES-GCM encrypted backup flows
 - IndexedDB persistence and a service-worker application shell for offline use
@@ -34,7 +35,9 @@ Use these exact headers on row 1, in this order:
 Ledger Code, Ledger Name, Group, Subgroup, Closing Debit, Closing Credit, Previous Debit, Previous Credit
 ```
 
-Amounts must be in INR, not lakhs or crores, and closing debits must equal closing credits exactly. The adaptive importer skips blank/title rows and exact total rows, but the preview and totals must still be reviewed before activation. Download [the source-controlled CSV template](samples/white-horse-tb-template.csv) or read the complete [Trial Balance import specification](docs/TRIAL_BALANCE_IMPORT_FORMAT.md). The application provides both downloads from **Trial Balance → Standard TB template**; the XLSX keeps the blank import sheet separate from its instructions and worked example.
+Amounts must be in INR, not lakhs or crores, and closing debits must equal closing credits exactly. The adaptive importer skips blank/title rows and exact total rows, but the preview and totals must still be reviewed before activation. Download [the source-controlled CSV template](samples/white-horse-tb-template.csv) or read the complete [Trial Balance import specification](docs/TRIAL_BALANCE_IMPORT_FORMAT.md). The application provides both templates and three verified demonstration workbooks from **Trial Balance → Import Trial Balance**. The standard XLSX keeps the blank import sheet separate from its instructions and worked example.
+
+Verified synthetic workbooks: [Meridian Manufacturing](public/samples/Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx), [BluePeak Digital Services](public/samples/Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx), and [GreenTrail Foods](public/samples/Sample_GreenTrail_Foods_TB_FY2025-26.xlsx). Each uses different ledger data and contains a separate instructions sheet.
 
 ## Data and privacy model
 
@@ -76,7 +79,7 @@ npm run preview
 
 1. Open **Company setup** to show the legal identity, period, framework, local roles, and the new-company workflow.
 2. Open **Trial Balance → Import Trial Balance** and upload a ledger-level `.xlsx`, `.csv`, `.tsv`, or delimited `.txt` export. Review the detected worksheet/header and use the mapper when headings are ambiguous. The standard CSV/XLSX template remains available as a controlled fallback.
-3. Preview [the synthetic CSV](samples/saffron-trial-balance.csv). Do not activate it unless you intend to create a new local import version.
+3. Download and import one of the three verified synthetic XLSX examples from the dialog, or preview [the synthetic CSV](samples/saffron-trial-balance.csv). Do not activate a sample unless you intend to create a new local import version.
 4. Review mapping status and posted/submitted adjustments.
 5. Open **Review & validation** to run deterministic controls and inspect evidence.
 6. Open **Financial statements**, switch among statements, and select a line for ledger drill-down.

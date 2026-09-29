@@ -65,7 +65,7 @@ export function OverviewPage({
     <div className="page overview-page">
       <PageHeader
         eyebrow="Financial close workspace"
-        title={`Good morning, ${preparerName}`}
+        title={`Hello, ${preparerName}`}
         description={`Here is the preparation status for ${workspace.company.tradeName} · ${workspace.period.label}.`}
         actions={
           <><button className="button button-secondary" onClick={() => navigate('review')}>Continue review <Icon name="arrow-right" size={16}/></button><button className="button button-primary" disabled={exporting} onClick={() => void generateCompleteFinancials()}><Icon name="download" size={16}/>{exporting ? 'Generating…' : 'Generate complete financials'}</button></>

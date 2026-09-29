@@ -20,6 +20,24 @@ import {
 import { Icon } from '../components/Icon';
 import { Modal, PageHeader, StatusBadge } from '../components/ui';
 
+const sampleTrialBalances = [
+  {
+    fileName: 'Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx',
+    company: 'Meridian Manufacturing Private Limited',
+    profile: 'Manufacturing · inventory, PPE and borrowings'
+  },
+  {
+    fileName: 'Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx',
+    company: 'BluePeak Digital Services Private Limited',
+    profile: 'Services · software, receivables and employee costs'
+  },
+  {
+    fileName: 'Sample_GreenTrail_Foods_TB_FY2025-26.xlsx',
+    company: 'GreenTrail Foods Private Limited',
+    profile: 'Food business · inventory, trade channels and plant'
+  }
+] as const;
+
 export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceData; notify: (message: string, tone?: 'success' | 'error') => void }) {
   const [search, setSearch] = useState('');
   const [showImport, setShowImport] = useState(false);
@@ -254,6 +272,23 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
               <button className="button button-secondary" onClick={downloadCsvTemplate}><Icon name="download" size={16}/> CSV template</button>
             </div>
           </div>
+          <section className="sample-tb-section" aria-labelledby="sample-tb-heading">
+            <div className="sample-tb-heading">
+              <div>
+                <strong id="sample-tb-heading">Import-ready sample Trial Balances</strong>
+                <p>Use these synthetic, balanced workbooks to test the complete import flow. Each follows the White Horse standard format and contains different company data.</p>
+              </div>
+              <StatusBadge tone="green">VERIFIED</StatusBadge>
+            </div>
+            <div className="sample-tb-downloads">
+              {sampleTrialBalances.map((sample) => (
+                <a className="sample-tb-download" href={`${import.meta.env.BASE_URL}samples/${sample.fileName}`} download key={sample.fileName}>
+                  <span><strong>{sample.company}</strong><small>{sample.profile}</small></span>
+                  <span><Icon name="download" size={16}/> XLSX</span>
+                </a>
+              ))}
+            </div>
+          </section>
           <ol className="standard-import-steps">
             <li>Export a ledger-level Trial Balance in INR as XLSX, CSV, TSV or delimited TXT.</li>
             <li>Upload it directly. White Horse scans worksheets and the first 50 rows for the table header.</li>

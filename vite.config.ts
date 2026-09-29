@@ -11,7 +11,10 @@ export default defineConfig({
       includeAssets: [
         'white-horse.svg',
         'templates/White_Horse_Standard_TB_Import.xlsx',
-        'templates/White_Horse_Standard_TB_Import.csv'
+        'templates/White_Horse_Standard_TB_Import.csv',
+        'samples/Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx',
+        'samples/Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx',
+        'samples/Sample_GreenTrail_Foods_TB_FY2025-26.xlsx'
       ],
       manifest: {
         name: 'White Horse — Financial Statements Workspace',

@@ -6,6 +6,16 @@ White Horse can read many tabular Trial Balance exports directly and provides a 
 
 Downloadable templates are available inside **Trial Balance → Standard TB template** in both CSV and XLSX formats. The XLSX contains a blank sheet named `Trial Balance Import`, an `Instructions` sheet, and a separate `Worked Example` sheet. White Horse scans candidate worksheets and deliberately excludes clearly named instruction/example/sample sheets from automatic selection whenever another sheet exists; the user can still select any worksheet and header row explicitly. The repository CSV copy is `samples/white-horse-tb-template.csv`.
 
+The import dialog also provides three synthetic, parser-verified examples in the exact `WH-TB-1.0` structure:
+
+| Workbook | Industry | Current debit = credit | Comparative debit = credit |
+| --- | --- | ---: | ---: |
+| `Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx` | Manufacturing | ₹117,400,000 | ₹100,300,000 |
+| `Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx` | Digital services | ₹51,200,000 | ₹36,550,000 |
+| `Sample_GreenTrail_Foods_TB_FY2025-26.xlsx` | Food distribution | ₹120,300,000 | ₹98,700,000 |
+
+These workbooks contain synthetic study data only. Each has the eight import columns on the first sheet and an instructions sheet after it. They are examples of a valid interchange format, not evidence that their classifications or disclosures are appropriate for a real entity.
+
 ## Adaptive import workflow
 
 The importer accepts `.xlsx`, `.csv`, `.tsv`, and delimited `.txt` files. It:

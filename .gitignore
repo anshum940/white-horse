@@ -19,5 +19,6 @@ white-horse-backup-*.whbackup
 !samples/*.csv
 !public/templates/*.xlsx
 !public/templates/*.csv
+!public/samples/*.xlsx
 Thumbs.db
 .DS_Store

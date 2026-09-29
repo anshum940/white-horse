@@ -1363,3 +1363,191 @@ The requested adaptive Trial Balance workflow, standards-based PDF export, and i
 ### Documentation publication and final repository state
 
 This deployment record was committed as `17e7d45 docs: record adaptive import deployment [skip ci]` and pushed from `fe0cbff` to `17e7d45` on `origin/main`. The remote API returned full head SHA `17e7d45820fcc0c28ac53f637c027e1ee55e5654`, author `Anshum`, and the expected commit message. `git status --short --branch` then returned only `## main...origin/main`, confirming a clean synchronized tree. A three-run GitHub Actions listing still showed `36386673937` as the newest run, confirming that the `[skip ci]` documentation commit did not create a redundant build or Pages deployment. The release workflow remained `completed/success`, including successful `Verify and build` and `Deploy to Pages` jobs.
+
+## 29 September 2026 — Professional typography, Schedule III note schedules and import-ready Trial Balances
+
+### Objective and user request
+
+The user requested six connected deliverables:
+
+1. Create two or three balanced Trial Balance Excel files for different synthetic companies, with different ledger data in each, that import into White Horse without error.
+2. Increase the application's small typography slightly and use a professional font treatment.
+3. Correct the hierarchy, spacing and typography of the browser-generated financial-statement PDF pack.
+4. Replace `Good morning, Abhijit` with a neutral greeting.
+5. Correct the Schedule III note presentation, particularly the Property, Plant and Equipment note, and review the other note schedules.
+6. Present the resulting financials at the standard expected of an experienced Chartered Accountant while retaining explicit professional-review controls.
+
+The implementation will improve deterministic report structure and presentation; it will not imply that software output replaces entity-specific accounting judgements, applicable Accounting Standards, audit evidence, statutory approval or a current professional review.
+
+### Governing skills and initial repository state
+
+The Spreadsheets skill is being used to author and visually verify the three `.xlsx` Trial Balance files through the bundled `@oai/artifact-tool` runtime. The PDF skill is being used to render and inspect the final financial-statement pack. The spreadsheet skill, create workflow, API quick start, style guidance and Finance guidance were read before workbook authoring. The PDF workflow and its render-before-delivery requirements were also read.
+
+Initial Git state:
+
+```text
+## main...origin/main
+```
+
+Initial inspection commands included:
+
+```powershell
+git -c safe.directory=C:/Users/anshu/Documents/Personal/CA-project status --short --branch
+rg --files src docs public output outputs
+rg -n --hidden -S "Good morning|font-size|font-family|FinancialPdfPack|Notes to Accounts|Property, plant|PPE|Schedule III|notes" src docs package.json vite.config.*
+Get-Content -Raw src/components/FinancialPdfPack.tsx
+Get-Content -Raw src/data/noteTemplates.ts
+Get-Content -Raw src/data/noteTemplates.test.ts
+```
+
+The broad file-list command reported that the optional `output` directory does not exist, while still returning the repository files from the other requested paths. The broad PowerShell `rg` query again demonstrated that a Unix-style `vite.config.*` positional glob is invalid on Windows (`os error 123`); later searches use explicit file names or `--glob`.
+
+### Confirmed baseline issues
+
+- Many screen elements use 7–10px text; table bodies are 9px and table headers 8px. This is unnecessarily small for normal desktop review.
+- The application uses Inter as its first body-font choice without bundling it; fallback rendering therefore depends on the device. The serif heading treatment is restrained but inconsistent with the report pack's professional body typography.
+- The print stylesheet reduces face-statement rows to 7.2pt. Long statements and disclosures therefore appear dense even though the pack has A4 page breaks.
+- The PDF notes page renders each disclosure as a compact card containing aggregate mapped amounts and narrative text. It does not present a two-column note schedule, and PPE lacks a gross-block/accumulated-depreciation/net-block reconciliation.
+- The note templates contain useful completion guidance but do not carry a structured Schedule III presentation model for the print pack.
+- The dashboard greeting is hardcoded as `Good morning` regardless of time or user preference.
+- Existing import samples are CSV-only. Three different balanced XLSX workbooks are required and must be verified with the same production parser used by White Horse.
+
+### Planned work and verification
+
+1. Research the current official Schedule III Division I presentation and 2021 amendment requirements using MCA sources already referenced by the project, supplemented only by authoritative ICAI guidance where necessary.
+2. Extend the notes report model with professional two-year schedules, including a PPE roll-forward that reconciles opening gross carrying amount, additions, disposals, depreciation, impairment and closing net carrying amount.
+3. Increase application typography conservatively, standardise an installed professional font stack, and separately tune A4 print typography, margins, repeating headers, amount columns and note page breaks.
+4. Create three balanced, synthetic company Trial Balance workbooks in the supported standard import layout, using different industries, ledgers and balances.
+5. Import each final XLSX through `parseTrialBalanceFile`, confirm exact debit/credit equality and zero blocking errors, recalculate/inspect/render each workbook, and visually inspect the PDF pages after generation.
+6. Run type-check, the complete automated test suite, production build, dependency audit, browser QA and clean-diff checks before any commit or deployment.
+
+### Authoritative accounting and platform references reviewed
+
+The implementation boundary and note wording were checked against authoritative sources already used by the project:
+
+- MCA Schedule III amendment notification dated 24 March 2021: https://www.mca.gov.in/Ministry/pdf/ScheduleIIIAmendmentNotification_24032021.pdf
+- MCA Schedule III notification dated 11 October 2018: https://www.mca.gov.in/Ministry/pdf/NotificationScheduleIII_12102018.pdf
+- ICAI Guidance Note on Division I Schedule III (revised January 2022): https://publication.icai.org/publication/76
+- GitHub Pages HTTPS guidance: https://docs.github.com/en/pages/getting-started-with-github-pages/securing-your-github-pages-site-with-https
+
+Schedule III and its guidance require entity-specific disclosures and detailed movement information that cannot be reconstructed safely from closing Trial Balance balances alone. The original plan to manufacture a gross-block PPE roll-forward was therefore rejected. The production report instead provides a truthful net carrying-amount bridge and explicitly requests the fixed-asset register/workpapers needed to complete gross carrying amount, additions, disposals, accumulated depreciation, impairment and other class-wise disclosures. This preserves mathematical reconciliation without presenting invented accounting evidence.
+
+### Import-ready Trial Balance workbooks
+
+Three different synthetic companies were authored in the exact eight-column `WH-TB-1.0` layout. Each workbook contains the import table as its first sheet and a separate instructions sheet, uses Arial 10-point workbook typography, freezes the header, applies numeric formats, and clearly identifies the data as synthetic.
+
+Final deliverables:
+
+```text
+outputs/01a0e192-cbe3-7572-b95c-03c30cc778f0/Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx
+  25 ledgers; current Dr = Cr = ₹117,400,000; comparative Dr = Cr = ₹100,300,000
+
+outputs/01a0e192-cbe3-7572-b95c-03c30cc778f0/Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx
+  21 ledgers; current Dr = Cr = ₹51,200,000; comparative Dr = Cr = ₹36,550,000
+
+outputs/01a0e192-cbe3-7572-b95c-03c30cc778f0/Sample_GreenTrail_Foods_TB_FY2025-26.xlsx
+  24 ledgers; current Dr = Cr = ₹120,300,000; comparative Dr = Cr = ₹98,700,000
+```
+
+The spreadsheet artefact workflow inspected workbook structure and rendered each sheet to PNG. All three renders were visually checked for clipped columns, unreadable text, broken numeric formatting and unwanted spreadsheet errors. Copies were placed in `public/samples/` so the browser import dialog can download them. `vite.config.ts` now includes those samples as PWA assets; the production service worker precaches all three for offline demonstrations.
+
+`src/services/trialBalanceSampleFiles.test.ts` imports every final workbook through the same `parseTrialBalanceFile` path used by the application and asserts exact standard-format detection, expected row counts, no errors, no manual mapping requirement, exact current/comparative totals and zero difference. This is stronger than validating the files only with an external spreadsheet library.
+
+### Note schedules and professional reporting changes
+
+Implemented `src/domain/noteSchedules.ts` as the deterministic note-schedule layer. It:
+
+- derives ledger-level current and comparative schedules from the active Trial Balance;
+- includes posted journal adjustments in current-period note amounts;
+- presents credit-normal note balances as positive disclosure amounts;
+- reconciles each note total to its matching face-statement line;
+- falls back to the statement line when no ledger-level schedule exists; and
+- adds note-specific professional completion requirements.
+
+PPE and intangible notes now show a labelled net carrying-amount reconciliation: opening comparative net carrying amount plus net TB movement equals closing current net carrying amount. The report explicitly states that this is not a substitute for the fixed-asset register or a Schedule III gross-block/depreciation movement schedule. Receivable/payable ageing, promoter/share-register details, borrowings/security/default data and other register-dependent disclosures likewise retain explicit completion requirements.
+
+`src/data/noteTemplates.ts` now exports the Division I disclosure guidance used consistently by note creation and reporting. It also corrects the Profit and Loss note numbering to Other expenses 25, Depreciation and amortisation 26, and Finance costs 27. `src/data/noteTemplates.test.ts` and the new `src/domain/noteSchedules.test.ts` cover guidance, numbering, statement reconciliation, bridge arithmetic, credit-normal presentation and posted-adjustment inclusion.
+
+`src/components/FinancialPdfPack.tsx` now renders professional ledger schedules with current/comparative columns, note totals, completion requirements and PPE/intangible bridges. A table header group repeats the White Horse/company/section header on every notes continuation page. The cover, face statements, notes and ratios use a consistent restrained hierarchy and retain the existing draft/professional-review warning.
+
+### Typography, greeting and signature layout
+
+The default body stack was standardised to locally available professional fonts (`Segoe UI`, `Aptos`, Arial, sans-serif), with Cambria/Georgia/Times for display and financial-statement hierarchy. Very small 5–11px UI declarations were raised conservatively by approximately one pixel; large headings and layout dimensions were not inflated. Report, statement and signature components use the shared font variables.
+
+The overview greeting was changed from time-specific `Good morning, Abhijit` to `Hello, Abhijit`.
+
+The A4 print stylesheet now uses 13mm margins, readable statement sizing, aligned amount columns, repeating table headers and controlled note page breaks. The initial real PDF render revealed one defect: when both signing blocks were enabled, the Balance Sheet alone filled the face-statement page and its Director/CA blocks moved to an otherwise empty next page. The Balance Sheet now receives a dedicated print class with slightly tighter row padding and signature whitespace; the result retains readable type while keeping the statement and both blocks together.
+
+Signature behaviour remains optional and period-specific: Director information prints at bottom left and Chartered Accountant information at bottom right only when the respective toggle is enabled. The blocks remain unsigned placeholders and do not create a digital signature or auditor's report.
+
+### Commands, QA results and error handling
+
+The primary implementation and verification commands were:
+
+```powershell
+npm test
+npm run typecheck
+npm run build
+npm audit --omit=dev --audit-level=high
+git diff --check
+```
+
+An early attempt used `npm test -- --runInBand`. Vitest does not expose Jest's `--runInBand` option, so the command failed before executing tests. Root cause: an unsupported test-runner flag, not a code failure. It was removed and the normal `vitest run` script was used.
+
+The first restricted `npm audit` attempt could not reach the official npm advisory endpoint. It was rerun with approved network access against the official npm service and reported `found 0 vulnerabilities`. No dependency was installed or upgraded for this task.
+
+Direct command-line browser printing initially produced a blank PDF because it captured the HTML before the React/IndexedDB fixture had mounted. A CDP QA harness was created temporarily to wait for six rendered `.pdf-page` sections and `document.fonts.ready`, force print media, then call the browser's `Page.printToPDF`. The temporary fixture included clearly synthetic Director and CA fields only for layout validation and was removed after QA.
+
+The first development-server QA attempt failed with an `EBUSY` watcher error because a temporary Chrome profile had been placed inside the watched workspace. Root cause: Chrome locks files in its profile while Vite scans the project. The clean retry placed the disposable browser profile under the operating-system temporary directory, outside the repository. No production file was affected.
+
+The final CDP render result was:
+
+```text
+Tagged PDF: yes
+Page size: A4 (594.96 × 841.92 pt)
+Pages: 12
+```
+
+All pages were visually inspected during the PDF workflow; after the final signature-spacing patch, the affected Balance Sheet and following Profit and Loss pages were rendered again at 110 DPI and inspected in full. The Balance Sheet now contains both signing blocks on the same page, the next page begins with Profit and Loss, the notes repeat their report header correctly, and no text/table clipping was observed. All QA-only HTML, React fixture and PDF artefacts are scheduled for removal before the final repository commit.
+
+Final local checks after the last code change:
+
+```text
+npm test
+  17 test files passed; 55/55 tests passed
+
+npm run typecheck
+  passed
+
+npm run build
+  passed; Vite 8.3.1; 187 modules transformed
+  CSS 60.07 kB / 11.82 kB gzip
+  Trial Balance chunk 40.67 kB / 12.34 kB gzip
+  Statements chunk 25.22 kB / 6.10 kB gzip
+  entry 407.06 kB / 125.09 kB gzip
+  PWA precache 28 entries / 731.59 KiB
+```
+
+Production output inspection confirmed that `dist/samples/` contains all three XLSX workbooks and `dist/sw.js` includes their revisioned precache entries.
+
+### Documentation synchronisation and next release steps
+
+Updated `README.md`, `docs/TRIAL_BALANCE_IMPORT_FORMAT.md`, `docs/USER_GUIDE.md`, and `docs/REPORT_CATALOG.md` with the sample workbooks, schedule construction rules, PPE evidence boundary, PDF formatting and optional signing behaviour. Remaining release work is to remove scratch outputs, run the clean-diff/security gate, authenticate to the intended GitHub account through a fresh device-code flow, commit/push the reviewed files, monitor the Pages workflow, and verify the public HTTPS deployment including direct sample downloads.
+
+The exact output root was resolved before deletion. The temporary `_build`, `_qa`, and three `.inspect.ndjson` sidecars were then removed with explicit literal paths. The output directory now contains exactly the three requested final XLSX workbooks. Both Vite QA sessions were sent interrupt signals. A follow-up `Get-NetTCPConnection` returned no listening entries for ports 4173/4174; the accompanying attempt to enrich process details through `Get-CimInstance Win32_Process` returned `Access denied` under the managed shell. Because there were no listeners, no process termination or elevated workaround was necessary.
+
+The pre-release repository gate reported:
+
+```text
+git diff --check: passed
+Git: 2.55.0.windows.2
+GitHub CLI: 2.93.0
+Node.js: v24.16.0
+npm: 11.16.0
+Git author: Anshum <105625445+anshum940@users.noreply.github.com>
+Remote: https://github.com/anshum940/white-horse.git
+Branch: main, synchronized with origin/main before this release commit
+Credential/private-key/personal-email scan: no matching patterns
+```
+
+A fresh GitHub CLI web/device flow was started as required by the repository authentication policy. The user authorised it in GitHub; the one-time device code is intentionally not retained in this log. GitHub CLI confirmed authentication as `anshum940` and HTTPS as the Git protocol. Account/API identity will be rechecked immediately before the authenticated push.

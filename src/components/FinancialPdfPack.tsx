@@ -1,5 +1,6 @@
 import { calculateRatioSchedule, formatRatioValue } from '../domain/ratios';
 import { formatMoney } from '../domain/money';
+import { buildNoteSchedule } from '../domain/noteSchedules';
 import type { FinancialStatements, KpiSet, ReportLine, WorkspaceData } from '../domain/types';
 import { StatementSignatures } from './StatementSignatures';
 import { StatementTable } from './ui';
@@ -14,8 +15,12 @@ function ReportHeader({ workspace, label }: { workspace: WorkspaceData; label: s
 }
 
 function StatementPage({ workspace, title, lines }: { workspace: WorkspaceData; title: string; lines: ReportLine[] }) {
+  const pageClassName = title === 'Balance Sheet'
+    ? 'pdf-page pdf-statement-page pdf-balance-sheet-page'
+    : 'pdf-page pdf-statement-page';
+
   return (
-    <article className="pdf-page pdf-statement-page">
+    <article className={pageClassName}>
       <ReportHeader workspace={workspace} label={title}/>
       <div className="statement-title pdf-statement-title">
         <p>{workspace.company.legalName}</p>
@@ -38,7 +43,6 @@ function StatementPage({ workspace, title, lines }: { workspace: WorkspaceData; 
 }
 
 export function FinancialPdfPack({ workspace, statements, kpis }: { workspace: WorkspaceData; statements: FinancialStatements; kpis: KpiSet }) {
-  const statementLineByCode = new Map([...statements.balanceSheet, ...statements.profitAndLoss].map((line) => [line.code, line]));
   const notes = [...workspace.notes].sort((left, right) => Number(left.noteNumber) - Number(right.noteNumber));
   const ratios = calculateRatioSchedule(statements, kpis);
   const generatedAt = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
@@ -70,22 +74,70 @@ export function FinancialPdfPack({ workspace, statements, kpis }: { workspace: W
       <StatementPage workspace={workspace} title="Cash Flow Statement" lines={statements.cashFlow}/>
 
       <article className="pdf-page pdf-notes-page">
-        <ReportHeader workspace={workspace} label="Notes to Accounts"/>
-        <div className="pdf-section-title"><h2>Notes to Accounts</h2><p>forming part of the financial statements for {workspace.period.label}</p></div>
-        <div className="pdf-notes-list">
-          {notes.map((note) => {
-            const lines = note.taxonomyCodes.map((code) => statementLineByCode.get(code)).filter((line): line is ReportLine => Boolean(line));
-            const current = lines.reduce((total, line) => total + line.currentPaise, 0);
-            const comparative = lines.reduce((total, line) => total + line.comparativePaise, 0);
+        <table className="pdf-notes-document">
+          <thead><tr><td><ReportHeader workspace={workspace} label="Notes to Accounts"/></td></tr></thead>
+          <tbody>
+            <tr className="pdf-notes-intro-row"><td>
+              <div className="pdf-section-title">
+                <h2>Notes forming part of the financial statements</h2>
+                <p>Schedule III, Division I-oriented presentation for {workspace.period.label}. Amounts are in ₹ {workspace.company.displayScale.toLowerCase()} unless otherwise stated.</p>
+              </div>
+              <aside className="pdf-notes-basis">
+                <strong>Basis of these schedules</strong>
+                <p>Amounts below are derived from the active Trial Balance, reviewed ledger mappings and posted adjustments. Disclosure workpapers such as the fixed-asset register, ageing schedules, share register and statutory registers remain subject to professional completion and review.</p>
+              </aside>
+            </td></tr>
+            {notes.map((note) => {
+            const schedule = buildNoteSchedule(note, workspace, statements);
+            const narrativeRepeatsRequirement = note.narrative.trim() === schedule.completionRequirement?.trim();
             return (
-              <section className="pdf-note" key={note.id}>
-                <header><span>Note {note.noteNumber}</span><h3>{note.title}</h3><em>{note.status.replaceAll('_', ' ')}</em></header>
-                {note.taxonomyCodes.length > 0 && <div className="pdf-note-amounts"><span>{workspace.period.label}<strong>{formatMoney(current, workspace.company.displayScale)}</strong></span><span>{workspace.period.comparativeLabel}<strong>{formatMoney(comparative, workspace.company.displayScale)}</strong></span></div>}
-                <p>{note.narrative || 'Disclosure workpaper narrative has not been completed.'}</p>
-              </section>
+              <tr className="pdf-note-row" key={note.id}><td><section className="pdf-note">
+                <header>
+                  <span>Note {note.noteNumber}</span>
+                  <h3>{note.title}</h3>
+                  <em className={`pdf-note-status status-${note.status.toLowerCase().replaceAll('_', '-')}`}>{note.status.replaceAll('_', ' ')}</em>
+                </header>
+                {schedule.rows.length > 0 && (
+                  <table className="pdf-note-table">
+                    <thead><tr><th>Particulars</th><th>{workspace.period.label}</th><th>{workspace.period.comparativeLabel}</th></tr></thead>
+                    <tbody>
+                      {schedule.rows.map((row) => (
+                        <tr key={row.key}>
+                          <td>{row.label}</td>
+                          <td>{formatMoney(row.currentPaise, workspace.company.displayScale, { showZero: false })}</td>
+                          <td>{formatMoney(row.comparativePaise, workspace.company.displayScale, { showZero: false })}</td>
+                        </tr>
+                      ))}
+                      <tr className="pdf-note-total">
+                        <td>Total</td>
+                        <td>{formatMoney(schedule.totalCurrentPaise, workspace.company.displayScale)}</td>
+                        <td>{formatMoney(schedule.totalComparativePaise, workspace.company.displayScale)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+                {schedule.movementRows && (
+                  <div className="pdf-note-movement">
+                    <h4>Net carrying amount reconciliation</h4>
+                    <table>
+                      <tbody>{schedule.movementRows.map((row) => <tr className={row.emphasis ? 'pdf-note-total' : ''} key={row.label}><td>{row.label}</td><td>{formatMoney(row.amountPaise, workspace.company.displayScale)}</td></tr>)}</tbody>
+                    </table>
+                    <p>{schedule.movementScope}</p>
+                  </div>
+                )}
+                {note.narrative && !narrativeRepeatsRequirement && <div className="pdf-note-narrative"><strong>Entity-specific disclosure</strong><p>{note.narrative}</p></div>}
+                {!note.narrative && <div className="pdf-note-narrative"><strong>Entity-specific disclosure</strong><p>Disclosure workpaper narrative has not been completed.</p></div>}
+                {schedule.completionRequirement && (
+                  <div className="pdf-note-requirement">
+                    <strong>Professional completion requirement</strong>
+                    <p>{schedule.completionRequirement}</p>
+                  </div>
+                )}
+              </section></td></tr>
             );
-          })}
-        </div>
+            })}
+          </tbody>
+        </table>
       </article>
 
       <article className="pdf-page pdf-ratios-page">
