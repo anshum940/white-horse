@@ -1551,3 +1551,77 @@ Credential/private-key/personal-email scan: no matching patterns
 ```
 
 A fresh GitHub CLI web/device flow was started as required by the repository authentication policy. The user authorised it in GitHub; the one-time device code is intentionally not retained in this log. GitHub CLI confirmed authentication as `anshum940` and HTTPS as the Git protocol. Account/API identity will be rechecked immediately before the authenticated push.
+
+### Release commit and GitHub Pages deployment
+
+The fresh authenticated identity was verified immediately before publication:
+
+```text
+Active GitHub account: anshum940
+GitHub numeric id: 105625445
+Git protocol: HTTPS
+Repository author: Anshum <105625445+anshum940@users.noreply.github.com>
+Repository remote: https://github.com/anshum940/white-horse.git
+```
+
+The reviewed files were staged explicitly; no output scratch directory or QA fixture was included. `git diff --cached --check` passed. The release commit is:
+
+```text
+83900000f2f0c8b68fb07d0dd6b53aba2d65dd2b
+feat: add verified TB samples and professional reports
+19 files changed, 751 insertions(+), 195 deletions(-)
+```
+
+Push result:
+
+```text
+To https://github.com/anshum940/white-horse.git
+   96934a8..8390000  main -> main
+```
+
+GitHub Actions run https://github.com/anshum940/white-horse/actions/runs/36523311055 completed successfully for the exact release SHA. The `Verify and build` job passed locked dependency installation, dependency audit, TypeScript checking, all automated tests, the production PWA build, Pages configuration and artifact upload. The `Deploy to Pages` job then deployed the artifact successfully. GitHub emitted only its informational notice that `ubuntu-latest` will migrate to Ubuntu 26 beginning 19 October 2026; no release step was affected.
+
+### Live HTTPS and browser verification
+
+The deployed application and service worker were requested without cache reuse:
+
+```text
+APP status=200 content_type=text/html; charset=utf-8 hsts=max-age=31556952
+SW  status=200 content_type=application/javascript; charset=utf-8 sample_entries=3
+```
+
+The first remote-file loop accidentally used the PowerShell interpolation form `"$sampleName?build=..."`. PowerShell parsed `?build` as part of the variable token and produced a URL ending in `/=8390000`, causing expected GitHub Pages 404 responses followed by local missing-temporary-file errors. This was a verification-script error, not a deployment failure. A local echo reproduced the root cause. The URL was corrected to `"${sampleName}?build=..."`, `-ErrorAction Stop` was applied, and all downloads then passed:
+
+```text
+Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx
+  HTTP 200; 6,637 bytes; deployed SHA-256 equals repository file
+
+Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx
+  HTTP 200; 6,429 bytes; deployed SHA-256 equals repository file
+
+Sample_GreenTrail_Foods_TB_FY2025-26.xlsx
+  HTTP 200; 6,611 bytes; deployed SHA-256 equals repository file
+```
+
+The existing Chrome profile initially showed the previous cached PWA and `Good morning, Abhijit`, then exposed the expected **A verified update is available** prompt. Activating that verified service-worker update retained the browser-local company workspace and loaded the new build. Live UI checks confirmed:
+
+- the dashboard now shows **Hello, Abhijit**;
+- the updated professional typography is visibly active;
+- the Import Trial Balance dialog shows the three synthetic workbooks with **VERIFIED**, distinct company/industry descriptions and correct `/white-horse/samples/*.xlsx` links;
+- Financial statements exposes **PDF & signatures**, **Export PDF**, and **Generate complete financials**;
+- the signing dialog exposes independent Director-left and Chartered-Accountant-right visibility controls; and
+- browser console warning/error count is zero.
+
+One browser QA selector expected the modal heading `PDF & signature settings` and timed out after the click. The control itself had opened correctly; a fresh DOM inspection showed its actual accessible heading is `PDF and signing blocks` and all expected controls were present. This was a test-selector wording mismatch, not an application error. The live financial-statement page was also visually inspected at normal desktop size and showed clear professional hierarchy, aligned columns and no visible clipping.
+
+The public release is available at:
+
+```text
+https://anshum940.github.io/white-horse/
+```
+
+### Final result and production boundary
+
+The requested sample workbooks, modest typography increase, neutral greeting, professional A4 formatting, optional Director/CA blocks and Schedule III-oriented note schedules are implemented, tested, published and verified. The three local deliverable workbooks remain in the task output directory in addition to their public in-app downloads.
+
+This release remains a local-first, single-browser preparation tool. The report schedules reconcile deterministically to the active Trial Balance and posted adjustments, but register-dependent disclosures, applicable accounting policies, legal approval, auditor reporting and current Schedule III compliance still require competent preparer/reviewer evidence. Before commercial SaaS sale, the documented production roadmap still requires tenant authentication/authorisation, encrypted central data storage and backup/restore, server-side audit retention, monitoring/support, legal/privacy controls, validated framework packs for Division II/III and regulated sectors, and independent accounting/security acceptance testing.
