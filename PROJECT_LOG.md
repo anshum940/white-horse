@@ -1786,3 +1786,38 @@ The reviewed implementation commit was then created locally:
 ```
 
 The two additional insertions relative to the first staged summary are this continuously maintained staging/error record. A documentation-only follow-up records the commit before both commits are pushed together, allowing one Pages workflow to verify the complete source and its project log.
+
+The pre-push identity check again confirmed GitHub API user `anshum940` (`105625445`), author `Anshum <105625445+anshum940@users.noreply.github.com>`, a clean working tree and `main` ahead of `origin/main` by exactly two commits. The implementation commit and documentation follow-up were pushed together:
+
+```text
+8f0ccb4..8de3482  main -> main
+Final pushed head: 8de34823efe965cbeed9788b3a9636018a67da5b
+```
+
+GitHub Actions run https://github.com/anshum940/white-horse/actions/runs/36615903625 completed successfully for that exact head. The `Verify and build` job passed locked dependency installation, production dependency audit, TypeScript checking, all automated tests, the production PWA build, Pages configuration and artifact upload. `Deploy to Pages` then completed successfully. GitHub emitted only its informational notice that `ubuntu-latest` will migrate to Ubuntu 26 beginning 19 October 2026; no release step was affected.
+
+### Public HTTPS and live application verification
+
+The deployed application was fetched with cache bypass headers and the release SHA as a query value:
+
+```text
+Application: HTTP 200; text/html; charset=utf-8
+HSTS: max-age=31556952
+Entry asset: assets/index-il6W4DjL.js (exact local release asset)
+Service worker: HTTP 200; application/javascript; charset=utf-8
+Release entry asset present in service-worker precache: yes
+```
+
+The existing browser origin initially displayed the prior service-worker-controlled PWA and `Good morning, Abhijit`, despite the network response already serving the new asset. This was expected cached PWA behaviour, not a deployment rollback. The page exposed **A verified update is available**. Activating that already-verified update installed the new service worker and immediately displayed the new White Horse login cover.
+
+Live browser QA then confirmed:
+
+- `admin` / `admin123` opens the workspace and displays `Hello, Abhijit`;
+- the live Balance Sheet begins with `EQUITY AND LIABILITIES`, followed by shareholders' funds/liabilities, and Assets follows afterward;
+- the global `Reset all data` control is visible;
+- Notes displays the generated Saffron Industries company/CIN/office/industry/current-and-comparative-period disclosure;
+- the reset control opens the explicit irreversible-action confirmation describing every affected record and factory restoration;
+- **Cancel** closes that dialog without deleting data, and the automatic disclosure remains visible; and
+- browser console warning/error count is zero.
+
+The reset confirmation button itself was not activated during live verification. Its destructive transaction is covered by the isolated database test. The browser was signed out after QA and left on the live branded login cover for the user.
