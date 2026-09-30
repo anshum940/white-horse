@@ -17,6 +17,7 @@ The login is a polished client-side cover for the public study demo, not a secur
 - Three end-to-end-reconciled `WH-TB-1.0` sample workbooks for manufacturing, digital services, and food distribution demonstrations
 - Independent company workspaces, reporting periods, materiality settings, display scales, and local role records
 - A branded White Horse study-access cover, tab-scoped access marker, sign-out, and an explicitly labelled public-demo security boundary
+- One-click light/dark mode on the login cover and workspace top bar, with a browser-local preference and paper-white statement/PDF presentation
 - 21-character CIN format controls, non-overlapping comparative periods, and current financial-year defaults
 - Ledger-to-taxonomy mapping with current/non-current and cash-flow classifications
 - Balanced adjustment journals with preparer/reviewer states and workpaper references
@@ -51,6 +52,8 @@ The sample tests verify mapped Balance Sheets and current-year cash flow, not me
 ## Data and privacy model
 
 The hosted site is static. Trial Balances and workspace records are processed and stored in the current browser's IndexedDB database; they are not sent to an application server. Each browser/profile has a separate workspace. Created companies survive ordinary page reloads, browser restarts, and White Horse application deployments on that same site origin and profile. They are not cloud-synchronised and can still be lost if site data is cleared, a private session ends, storage is evicted/corrupted, or a different browser/profile/device is used. Company Setup reports the browser's persistence mode and can request persistent storage where supported; encrypted backups remain mandatory for recovery. GitHub Pages still serves the public application files and may process ordinary request metadata under GitHub's policies.
+
+The light/dark choice is stored separately in this browser's localStorage, so it survives reloads and sign-out and does not modify financial records. It remains after a workspace factory reset; clearing this site's browser data also clears the preference.
 
 Browser storage is not a substitute for endpoint encryption or access control. Use the synthetic sample for public demonstrations. If real data is ever used in a controlled environment, protect the device and browser profile, create encrypted backups, and clear site data when the engagement ends.
 
