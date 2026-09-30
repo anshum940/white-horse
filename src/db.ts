@@ -116,11 +116,6 @@ async function addFactoryDataset(): Promise<void> {
 }
 
 export async function initializeDatabase(): Promise<void> {
-  const exists = await db.companies.get(demoCompany.id);
-  if (exists) {
-    await maintainSeedData();
-    return;
-  }
   await db.transaction(
     'rw',
     [
@@ -137,6 +132,11 @@ export async function initializeDatabase(): Promise<void> {
       db.users
     ],
     async () => {
+      const exists = await db.companies.get(demoCompany.id);
+      if (exists) {
+        await maintainSeedData();
+        return;
+      }
       await addFactoryDataset();
     }
   );

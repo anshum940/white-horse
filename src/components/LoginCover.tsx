@@ -1,11 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { verifyDemoCredentials } from '../domain/demoAuthentication';
+import type { ThemePreference } from '../domain/themePreference';
 import { Icon } from './Icon';
+import { ThemeToggle } from './ThemeToggle';
 
 const MAX_ATTEMPTS = 5;
 const LOCK_SECONDS = 30;
 
-export function LoginCover({ onAuthenticated }: { onAuthenticated: () => void }) {
+export function LoginCover({ onAuthenticated, theme, onToggleTheme }: { onAuthenticated: () => void; theme: ThemePreference; onToggleTheme: () => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -78,6 +80,7 @@ export function LoginCover({ onAuthenticated }: { onAuthenticated: () => void })
       </section>
 
       <section className="login-panel">
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} className="login-theme-toggle"/>
         <div className="login-form-shell">
           <div className="login-mobile-brand"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt=""/><strong>WHITE HORSE</strong></div>
           <p className="eyebrow">Secure workspace entry</p>

@@ -5,10 +5,12 @@ import { initializeDatabase, listCompanyWorkspaces, loadWorkspace, resetAllWorks
 import { taxonomy } from './data/taxonomy';
 import { endDemoAccessSession, hasDemoAccessSession, startDemoAccessSession } from './domain/demoAuthentication';
 import { calculateFinancialStatements, calculateKpis } from './domain/statements';
+import { applyThemePreference, readThemePreference, THEME_STORAGE_KEY, type ThemePreference } from './domain/themePreference';
 import { validateWorkspace } from './domain/validation';
 import type { ValidationResult } from './domain/types';
 import { Icon, type IconName } from './components/Icon';
 import { LoginCover } from './components/LoginCover';
+import { ThemeToggle } from './components/ThemeToggle';
 import { Modal, StatusBadge } from './components/ui';
 
 const OverviewPage = lazy(() => import('./pages/OverviewPage').then((module) => ({ default: module.OverviewPage })));
@@ -46,15 +48,30 @@ function currentHash(): PageId {
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(hasDemoAccessSession);
+  const [theme, setTheme] = useState<ThemePreference>(readThemePreference);
+
+  useEffect(() => {
+    applyThemePreference(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === THEME_STORAGE_KEY) setTheme(readThemePreference());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  const onToggleTheme = () => setTheme((current) => current === 'light' ? 'dark' : 'light');
 
   if (!authenticated) {
-    return <LoginCover onAuthenticated={() => { startDemoAccessSession(); setAuthenticated(true); }}/>;
+    return <LoginCover onAuthenticated={() => { startDemoAccessSession(); setAuthenticated(true); }} theme={theme} onToggleTheme={onToggleTheme}/>;
   }
 
-  return <AuthenticatedApplication onLogout={() => { endDemoAccessSession(); setAuthenticated(false); }}/>;
+  return <AuthenticatedApplication onLogout={() => { endDemoAccessSession(); setAuthenticated(false); }} theme={theme} onToggleTheme={onToggleTheme}/>;
 }
 
-function AuthenticatedApplication({ onLogout }: { onLogout: () => void }) {
+function AuthenticatedApplication({ onLogout, theme, onToggleTheme }: { onLogout: () => void; theme: ThemePreference; onToggleTheme: () => void }) {
   const [databaseState, setDatabaseState] = useState<'LOADING' | 'READY' | 'ERROR'>('LOADING');
   const [databaseError, setDatabaseError] = useState('');
 
@@ -77,10 +94,10 @@ function AuthenticatedApplication({ onLogout }: { onLogout: () => void }) {
     return <div className="app-loading"><img src={`${import.meta.env.BASE_URL}white-horse.svg`} alt="White Horse"/><strong>Preparing your local workspace…</strong><span>Opening the browser-local data layer</span></div>;
   }
 
-  return <WorkspaceApplication onLogout={onLogout}/>;
+  return <WorkspaceApplication onLogout={onLogout} theme={theme} onToggleTheme={onToggleTheme}/>;
 }
 
-function WorkspaceApplication({ onLogout }: { onLogout: () => void }) {
+function WorkspaceApplication({ onLogout, theme, onToggleTheme }: { onLogout: () => void; theme: ThemePreference; onToggleTheme: () => void }) {
   const [activeCompanyId, setActiveCompanyId] = useState(() => localStorage.getItem('white-horse-active-company') ?? 'demo-company');
   const companies = useLiveQuery(() => listCompanyWorkspaces(), []);
   const workspace = useLiveQuery(() => loadWorkspace(activeCompanyId), [activeCompanyId]);
@@ -242,7 +259,7 @@ function WorkspaceApplication({ onLogout }: { onLogout: () => void }) {
       <div className="main-shell">
         <header className="topbar">
           <button className="company-switcher" onClick={() => setCompanySwitcherOpen(true)}><span className="company-monogram">{companyInitials}</span><span className="company-switcher-copy"><strong>{workspace.company.tradeName}</strong><small>{workspace.period.label} · Standalone · Division I</small></span><Icon name="chevron" size={15}/></button>
-          <div className="topbar-right"><StatusBadge tone={online ? 'green' : 'amber'}>{online ? 'ONLINE · LOCAL DATA' : 'OFFLINE READY'}</StatusBadge><button className="icon-button" aria-label="Search" onClick={() => setSearchOpen(true)}><Icon name="search"/></button><button className="icon-button notification-button" aria-label="Notifications" onClick={() => setNotificationOpen(true)}><Icon name="bell"/>{openNotifications.length > 0 && <i/>}</button></div>
+          <div className="topbar-right"><StatusBadge tone={online ? 'green' : 'amber'}>{online ? 'ONLINE · LOCAL DATA' : 'OFFLINE READY'}</StatusBadge><ThemeToggle theme={theme} onToggle={onToggleTheme}/><button className="icon-button search-trigger" aria-label="Search" onClick={() => setSearchOpen(true)}><Icon name="search"/></button><button className="icon-button notification-button" aria-label="Notifications" onClick={() => setNotificationOpen(true)}><Icon name="bell"/>{openNotifications.length > 0 && <i/>}</button></div>
         </header>
         <main><Suspense fallback={<div className="page route-loading"><strong>Opening workspace module…</strong><span>Loading only the controls needed for this page.</span></div>}>{content[page]}</Suspense></main>
       </div>

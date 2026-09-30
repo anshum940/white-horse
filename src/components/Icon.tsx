@@ -35,6 +35,8 @@ export type IconName =
   | 'database'
   | 'shield'
   | 'wifi-off'
+  | 'sun'
+  | 'moon'
   | 'close';
 
 const paths: Record<IconName, React.ReactNode> = {
@@ -72,6 +74,8 @@ const paths: Record<IconName, React.ReactNode> = {
   database: <><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></>,
   shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>,
   'wifi-off': <><path d="m2 2 20 20M8.5 8.5A10 10 0 0 0 5 11M2 8a15 15 0 0 1 2.5-1.8M16 11a10 10 0 0 1 3 2M12 18h.01M9 15a4 4 0 0 1 6-1"/></>,
+  sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></>,
+  moon: <path d="M20.8 14.3A9 9 0 0 1 9.7 3.2 9 9 0 1 0 20.8 14.3Z"/>,
   close: <path d="m6 6 12 12M18 6 6 18"/>
 };
 

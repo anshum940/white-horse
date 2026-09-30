@@ -1,9 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { applyThemePreference, readThemePreference } from './domain/themePreference';
 import './styles.css';
 
 function start() {
+  applyThemePreference(readThemePreference());
   const root = document.getElementById('root');
   if (!root) throw new Error('Application root was not found.');
   createRoot(root).render(

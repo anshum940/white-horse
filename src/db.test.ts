@@ -40,6 +40,15 @@ describe('company workspace database controls', () => {
     await db.delete();
   });
 
+  it('initializes a fresh workspace atomically when startup runs twice', async () => {
+    db.close();
+    await db.delete();
+    await db.open();
+    await expect(Promise.all([initializeDatabase(), initializeDatabase()])).resolves.toHaveLength(2);
+    await expect(db.companies.count()).resolves.toBe(1);
+    await expect(loadWorkspace('demo-company')).resolves.toBeDefined();
+  });
+
   it('rejects an invalid CIN before writing any company records', async () => {
     const before = await db.companies.count();
     await expect(createCompanyWorkspace({ ...input(), cin: 'INVALID' })).rejects.toThrow('exactly 21');
