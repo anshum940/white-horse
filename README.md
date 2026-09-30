@@ -63,30 +63,93 @@ This is not yet a hosted multi-user SaaS service. Before commercial production u
 
 See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the exact boundary.
 
-## Run locally
+## Run locally from GitHub or a source ZIP
 
-Prerequisites: Node.js 24 and npm 11 or compatible current releases.
+These steps run White Horse privately on one PC, without publishing anything. They apply to both a Git clone and GitHub's **Code → Download ZIP**. The first source download and dependency installation need internet; after the dependencies and build exist, the app can run without internet **while its local server is running**. The examples use Windows PowerShell; the Git/Node/npm commands also work in other operating systems' terminals. This is a local study/demo setup, not a multi-user production server.
+
+### 1. Check the prerequisites
+
+Open PowerShell and check:
 
 ```powershell
-npm ci
-npm run dev
+node --version
+npm --version
 ```
 
-Vite displays the local URL. Because the production target is a project Pages site, the application base path is `/white-horse/`.
+The project requires Node.js **22.12.0 or newer**; the current [Node.js LTS release](https://nodejs.org/en/download) is recommended and includes npm. Install Node only if the checks fail or the version is too old, then open a new terminal. A current Chrome or Edge browser is recommended. Git is needed only for the clone option below; check `git --version` before choosing it. No GitHub sign-in is needed merely to download this public source.
 
-Quality gate:
+### 2. Obtain the project — choose one option
+
+- **Git clone:** In the folder where you want the project, run the commands below. This creates a `white-horse` folder. [GitHub cloning guide](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)
+
+  ```powershell
+  git clone https://github.com/anshum940/white-horse.git
+  cd white-horse
+  ```
+
+- **GitHub source ZIP:** Open the [White Horse repository](https://github.com/anshum940/white-horse), select **Code → Download ZIP**, and use **Extract All**. Open the extracted `white-horse-main` folder (the one containing `package.json` and `package-lock.json`), then open PowerShell/Terminal **inside that folder**. Git is not required for this option. [GitHub source-archive guide](https://docs.github.com/en/repositories/working-with-files/using-files/downloading-source-code-archives)
+
+If somebody sends you a ZIP of this GitHub source instead, extract it and open the folder containing `package.json` and `package-lock.json`; then continue with the same steps. A source ZIP does **not** contain installed dependencies, a ready-to-run build, or any companies saved in somebody else's browser.
+
+### 3. Install and build — first run while online
+
+From the project folder, run these commands **one at a time** and wait for each to finish successfully:
+
+```powershell
+npm ci --include=dev
+npm run build
+```
+
+`npm ci --include=dev` installs the exact locked dependencies **including the build tools** into `node_modules`, even if the PC has `NODE_ENV=production` set. It needs access to the npm registry on a fresh PC and replaces an existing `node_modules` folder. `npm run build` checks TypeScript and creates the ready-to-serve `dist` folder. If either command fails, resolve its error before proceeding. [npm clean-install guide](https://docs.npmjs.com/cli/v11/commands/npm-ci/) · [Vite build guide](https://vite.dev/guide/static-deploy)
+
+### 4. Start the local app
+
+In the **same project folder**, run:
+
+```powershell
+npm run preview -- --host 127.0.0.1 --port 8765 --strictPort
+```
+
+Open **http://127.0.0.1:8765/white-horse/** in the browser, then sign in with `admin` / `admin123` for the study demo. Keep the PowerShell window open while using White Horse; press **Ctrl+C** there to stop it. Do not double-click `index.html`: this build expects the `/white-horse/` web path and a local HTTP origin. `--strictPort` makes an occupied port an explicit error instead of silently moving to another browser-storage origin. Vite's preview server is intended for local testing, **not** production hosting. [Vite deployment and preview guide](https://vite.dev/guide/static-deploy)
+
+For a later offline session on this same PC, reopen the project folder and repeat only the command in step 4. You do not need to run `npm ci` or rebuild every time; rebuild when source files change. Keep Node, `node_modules`, and `dist` available. If you are developing the code, `npm run dev` starts Vite's development server, but it uses a different URL/storage origin and does not enable the production offline PWA; use the built preview above for the normal demo.
+
+### 5. Move it to a second PC
+
+**If the second PC has internet:** give them the GitHub link or a ZIP of the GitHub source. They follow steps 1–4 on their own PC. This is the most repeatable approach; `npm ci` downloads dependencies for that PC. Do not rely on copying your `node_modules` folder between different computers or operating systems.
+
+**If the second PC must start without internet:** prepare a separate **built-app ZIP** on a PC that has completed step 3:
+
+1. Make a folder named `WhiteHorseOffline`, with a folder named `white-horse` inside it. Copy **all contents** of `dist` into that inner `white-horse` folder. The result must include `WhiteHorseOffline\white-horse\index.html` and its `assets` folder. ZIP the outer `WhiteHorseOffline` folder.
+2. Before the second PC goes offline, check that it has Python 3 (`python --version`) and a modern browser. If Python is absent, arrange an appropriate local server/runtime while online; this built-app ZIP by itself is **not** a zero-install executable.
+3. Extract the ZIP. Open PowerShell in the extracted **outer** `WhiteHorseOffline` folder and run:
+
+   ```powershell
+   python -m http.server --bind 127.0.0.1 8765
+   ```
+
+4. Keep PowerShell open and visit **http://127.0.0.1:8765/white-horse/**. Disconnect the internet and test login, an example Trial Balance, and an export before the presentation. Node/npm are not needed on the receiving PC for this *built-app* route; Python is the local file server. Bind to `127.0.0.1` so it is not exposed to other PCs. Python's `http.server`, like Vite preview, is for a local demo and not production hosting. [Python server guide](https://docs.python.org/3/library/http.server.html)
+
+### 6. Move or preserve company data separately
+
+App files and GitHub ZIPs do **not** include browser-saved companies, Trial Balances, notes, or settings. On the original browser, open **Finalisation → Create backup → Encrypt & download** and retain the `.whbackup` file and its passphrase **separately**. On the receiving browser, open **Finalisation → Restore**, enter the passphrase, choose the backup file, review the integrity/company summary, type `RESTORE`, then select **Replace local database**. **Restore replaces all existing White Horse data in that receiving browser origin**, so back it up first if it matters. Do not commit real backups to GitHub or put them inside the folder served by Python.
+
+The public `https://anshum940.github.io/white-horse/` site and `http://127.0.0.1:8765/white-horse/` have separate browser storage. Reuse the **same browser profile, `127.0.0.1` hostname, and port `8765`** for later local sessions; changing the address can make companies appear missing. Avoid private/incognito windows and clearing site data. Browser storage is not a substitute for verified encrypted backups. [MDN same-origin/storage explanation](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Same-origin_policy)
+
+### Quick fixes and developer checks
+
+- `node`/`npm` not recognised: check installation and reopen PowerShell. If PowerShell blocks `npm.ps1`, use `npm.cmd` in place of `npm` (for example, `npm.cmd ci --include=dev`); do not disable the PC's execution policy. [Microsoft PowerShell execution-policy guide](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies)
+- Port `8765` already in use: stop the earlier local server with **Ctrl+C** and retry. A different port creates a different browser-storage origin.
+- Blank page or missing assets: confirm the exact `/white-horse/` URL, that `npm run build` succeeded, and that the built-app ZIP has `index.html` **inside** its `white-horse` subfolder.
+- Companies missing on another PC or on localhost: use the encrypted backup/restore procedure above; source files cannot transfer browser data.
+
+Optional checks for a developer changing the source:
 
 ```powershell
 npm run typecheck
 npm test
 npm run build
 npm audit --audit-level=moderate
-```
-
-Preview the exact production bundle:
-
-```powershell
-npm run preview
 ```
 
 ## Study demo flow
