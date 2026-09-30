@@ -461,6 +461,7 @@ textarea { padding: 10px; resize: vertical; line-height: 1.5; }
 .drilldown-button { width: 100%; padding: 0; border: 0; display: flex; align-items: center; justify-content: space-between; background: transparent; text-align: left; cursor: pointer; font-family: inherit; font-size: inherit; }
 .drilldown-button:disabled { opacity: 1; cursor: default; }.drilldown-button:not(:disabled):hover { color: var(--green-700); }
 .report-footer-note { margin-top: 18px; padding-top: 9px; display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid #d8d9d3; color: var(--muted); font-size: 7px; }.report-footer-note p { margin: 0; }
+.statement-comparative-note { margin: 8px 0 0; color: #755622; font-size: 9px; line-height: 1.4; }
 .drilldown-summary { margin-bottom: 14px; grid-template-columns: repeat(3, 1fr); }
 .statement-signatures { margin-top: 38px; display: grid; grid-template-columns: 1fr 1fr; gap: 55px; break-inside: avoid; }
 .signature-column { min-height: 155px; display: flex; flex-direction: column; align-items: flex-start; font-family: var(--font-display); font-size: 9px; line-height: 1.45; }
@@ -469,7 +470,13 @@ textarea { padding: 10px; resize: vertical; line-height: 1.5; }
 .signature-column strong { margin-top: 2px; font-size: 10px; }
 .signature-column small { margin-top: 7px; color: var(--muted); font-family: var(--font-body); font-size: 7px; }
 .signature-line { width: 145px; margin: 34px 0 6px; padding-top: 4px; border-top: 1px solid #4b5350; color: var(--muted); font-family: var(--font-body); font-size: 7px; letter-spacing: .04em; text-transform: uppercase; }
+.signature-director-people { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.signature-director-people.multiple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.signature-director-person { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; overflow-wrap: anywhere; }
+.signature-director-person .signature-line { width: 100%; max-width: 145px; }
 .signature-settings-section { margin-top: 14px; padding: 13px; border: 1px solid var(--line); border-radius: 8px; }
+.signature-director-heading { margin-top: 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 10px; }
+.signature-director-add { margin-top: 13px; }
 .signature-toggle { display: flex; align-items: flex-start; gap: 9px; cursor: pointer; }
 .signature-toggle input { height: auto; margin-top: 3px; }
 .signature-toggle span { display: flex; flex-direction: column; gap: 2px; }

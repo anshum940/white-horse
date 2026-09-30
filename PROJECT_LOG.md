@@ -1821,3 +1821,73 @@ Live browser QA then confirmed:
 - browser console warning/error count is zero.
 
 The reset confirmation button itself was not activated during live verification. Its destructive transaction is covered by the isolated database test. The browser was signed out after QA and left on the live branded login cover for the user.
+
+## 30 September 2026 — Correct demo Trial Balances and support additional directors
+
+### Objective and interpretation
+
+The user found cash-flow differences and other errors after importing the three supplied demonstration Trial Balances. Replace those three public XLSX files with distinct synthetic company data that imports and passes the application’s full financial-statement validation path, including cash-flow reconciliation. Add an **Add director** control to the Director signing settings so a preparer can show more than one named Director/DIN in the left signing block while retaining the optional Chartered Accountant block on the right. Preserve existing saved single-director settings when the application updates.
+
+### Initial state, skills and research
+
+`main` began clean and synchronised with `origin/main`. The existing test `src/services/trialBalanceSampleFiles.test.ts` checks only parser detection and current/comparative debit-credit totals. It does not map the samples, calculate statements, or execute `validateWorkspace`, so its passing result does not establish cash-flow or other report reconciliation. This coverage gap is the first confirmed cause of the reported demo issue; the underlying data and any additional cause will be determined from the app engine and workbook values before replacement.
+
+The Spreadsheet skill is being used because the deliverables are three XLSX workbooks. Its edit/create workflows, workbook API quick start, style guide, and finance guidance were read. The PDF skill is being used because the additional Director block changes the printable financial pack; its rendering requirements were read. No operating-system or package installation is planned. Official MCA/ICAI sources consulted include MCA's Companies Act 2013 section 134(1), which describes Board-approved financial-statement signing by the authorised chairperson or two directors in the applicable circumstances (https://www.mca.gov.in/Ministry/pdf/CompaniesAct2013.pdf), and MCA's AS 3 Cash Flow Statements (https://www.mca.gov.in/Ministry/pdf/AS3_16012018.pdf). The feature will preserve configurable, unsigned text blocks; it will not claim a signature or legal approval has occurred.
+
+### Working plan
+
+1. Read the three workbooks and run each through the real importer, mapping, statement and validation engine. Record the exact reconciliation failures and explain their causes.
+2. Build corrected replacement workbooks in the established eight-column format, retaining different companies and distinct accounting data. Verify imported rows, debit/credit equality, mapped statement balances, cash-flow difference, and validation findings for every file.
+3. Extend period-level signing settings with an add/remove Director workflow, validation, persistence, PDF/print rendering and backwards-compatible handling of existing saved settings.
+4. Run focused tests and required build gates, inspect the rendered PDF, update user guidance and this log, then publish and verify the public release.
+
+### Diagnosis in progress
+
+Read-only inspection commands: `Get-Content`/`rg` on the import service, statement engine, validation engine, signature settings/UI/CSS, sample-file test and published format guide; bundled Python `openpyxl` read-only inspection of all three current XLSX first sheets. The three books have balanced raw debits/credits but their prior sample test stops there. The new-company period starts every non-ledger cash-flow input at zero. The samples nevertheless contain changing PPE/intangibles, interest income/finance cost, taxes and retained-earnings balances; therefore a balanced TB does not imply the current cash-flow calculation will reconcile. Further, `suggestTaxonomyCode` searches combined account/group text in a rule order that can classify an `Employee benefits expense` as long-term employee provision and a `Raw materials consumed` expense as inventory. This is an independent, confirmed mapping cause of the user's “other errors.” No files have yet been changed beyond this log in the present task.
+
+### Implemented replacement files and controls
+
+The prior workbooks contained 25/21/24 ledgers and the old parser-only test passed, but a deliberately strengthened test initially failed against those old files with expected replacement row counts 19/17/19. This confirmed the old test had not protected the full demo outcome. The new synthetic source is recorded in `tools/sample-trial-balances.json`, and its repeatable XLSX builder is `tools/build-sample-trial-balances.mjs`. The builder uses the bundled `@oai/artifact-tool` spreadsheet runtime (with a temporary, removed workspace junction to the bundled node modules), performs independent debit/credit checks, writes the first-sheet eight-column import table plus an Instructions sheet, renders visual previews, scans for spreadsheet errors, exports three files to `outputs/demo-trial-balances-20260930/`, and copies them to the corresponding public download paths. The Spreadsheet skill authoring marker was called once immediately before the first authoring command. No package was installed.
+
+The replacement TBs have distinct account sets and figures for Meridian Manufacturing, BluePeak Digital Services and GreenTrail Foods. Current/comparative equal debit-credit totals are respectively INR 63,700,000 / 56,000,000; INR 18,350,000 / 14,500,000; and INR 31,150,000 / 25,500,000. Each scenario states no asset additions/disposals, PPE decrease equal to current depreciation, no cash tax paid with tax expense fully accrued, prior-period profit transferred to retained earnings, and no dividend/interest/other income. Those deliberate synthetic assumptions let the application's default zero cash-flow inputs reconcile; they are **not** advice for any real company's financials. The first and Instructions sheets of all three exported files were rendered and visually inspected: headings, amounts and scenario text are legible, with no clipping observed.
+
+The sample regression test now checks exact imported ledger values, zero parser errors/warnings, full taxonomy mapping, current/comparative Balance Sheet equality, current cash-flow reconciliation, positive current/comparative profit and an INFO-only `REV-000` validation result. It also creates a separate browser-database company for each sample, activates the actual XLSX import, reloads the workspace, and repeats the validation on persisted records. All three passed. The classifier now gives a source `Expenses`/`Income` group precedence over ambiguous balance-sheet keywords. A separate test protects the employee-benefit and material-consumed cases.
+
+The public demo download description now instructs users to create/select the matching company rather than import a sample into the preloaded, unrelated Saffron workspace. The import specification and README carry the new totals, scope and assumptions. The workbooks are demo-ready under those documented conditions, but balanced samples do not imply automated suitability for every company or Schedule III disclosure.
+
+### Additional Director and comparative presentation
+
+Period-level signing settings now accept one additional Director with independent full name, designation and eight-digit DIN. Existing single-director records without the optional array normalise to an empty array and remain readable. The settings modal offers Add another director and Remove director; two is the supported maximum because the printable left block is laid out as two equal signatory columns, with the optional CA block still on the right. Validation checks required details, lengths, DIN format and distinct DINs. The saved settings remain unsigned placeholders, not signatures or Board approval. Unit, UI interaction, PDF markup and IndexedDB persistence tests cover the feature.
+
+New workspaces have no comparative cash-flow summary; the old presentation silently displayed zero in that column. Screen, PDF and Excel exports now mark an unsupplied comparative cash-flow column unavailable instead. This does not invent a prior-period movement from a two-period closing TB. A test protects the PDF behaviour. The exact source remains the period's comparative summary when it is actually populated.
+
+### Verification and print QA
+
+Executed commands and outcomes during implementation:
+
+```text
+npm test -- src/services/trialBalanceSampleFiles.test.ts (old workbooks vs strengthened test)
+  expected failure: old row counts 25/21/24 versus replacement specification 19/17/19
+node tools/build-sample-trial-balances.mjs (bundled spreadsheet runtime)
+  generated 3 XLSX files, 19/17/19 ledgers, balanced current and comparative totals
+npm test -- src/services/trialBalanceSampleFiles.test.ts
+  passed: 4 tests (parser, map, actual database activation, statements and validation)
+npm test -- src/domain/signatureSettings.test.ts src/components/FinancialPdfPack.test.tsx src/db.test.ts
+  initial failure: new test fixture omitted the required place of signing; fixture corrected
+npm test -- src/pages/StatementsPage.test.tsx src/components/FinancialPdfPack.test.tsx
+  passed: 3 tests
+npm run typecheck
+  initial error TS7017 from test-only React act flag typing; corrected with Object.assign
+npm test
+  passed: 20 files, 69/69 tests
+npm run build
+  passed: tsc and Vite; 190 modules; PWA precache 29 entries / 765.37 KiB
+git diff --check
+  passed at the earlier implementation gate; to be rerun before publication
+```
+
+The PDF skill authoring marker was called once before printing a complete QA pack from the local code with two Directors and one CA. Headless Chrome generated a 14-page A4 PDF; a sandboxed Chrome usage-statistics registry warning was nonfatal and 508,733 PDF bytes were written. Poppler rendered face-statement pages 2–4 to PNG. Visual inspection confirmed each face statement and all three signatory text/lines remain on its intended page, without clipping or signature spillover. PDF text extraction found the names separated by layout tabs (`Asha\tRao`, `Neha\tKapoor`, `Vikram\tRao`), which explained why a naive literal-space search initially returned false; the signatories were present throughout. The generated PDF/HTML/previews, isolated Chrome profile and temporary node-modules junction were removed after verified-path cleanup. The 3 XLSX outputs and public copies remain. Official references were rechecked: MCA AS 3 (https://www.mca.gov.in/Ministry/pdf/AS3_16012018.pdf), Companies Act section 134 (https://www.mca.gov.in/Ministry/pdf/CompaniesAct2013.pdf), and GitHub's custom Pages workflow guide (https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
+Prepublication inspection found only the intended source, tests, documents and three public XLSX binaries modified; the generated `outputs/demo-trial-balances-20260930/` folder contains only three final XLSX files. SHA-256 comparison confirmed each output is byte-for-byte identical to its corresponding `public/samples/` replacement. `git diff --check` passed, and a targeted scan of project source/docs found no personal account email, GitHub token pattern, AWS access-key ID or private-key header. Git author is `Anshum <105625445+anshum940@users.noreply.github.com>`, remote is `https://github.com/anshum940/white-horse.git`, branch is `main`, and prepublication HEAD is `402791b91c4123a815b1a9dc255716d1b7c30f34`. `gh`, Git, Node and npm were verified locally; no installation was suggested.
+
+The fresh `gh auth login --web` command initially failed to reach GitHub's device endpoint from the restricted network sandbox (`connectex: access forbidden`). An approved network retry generated a new one-time device code, deliberately omitted here, and is waiting for the user to authorise it in the browser under `anshum940`. GitHub's device page was also opened in the Codex browser panel. No remote operation or push has yet been attempted on an assumed old authentication session. A read-only workflow check first used the wrong filename (`pages.yml`) and returned file-not-found; `rg --files .github/workflows` found the actual `deploy.yml`, whose build job runs audit, typecheck, tests and production PWA build before the Pages deploy job.

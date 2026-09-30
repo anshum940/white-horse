@@ -1,5 +1,6 @@
 import type { Cell, CellObject, SheetData, Value } from 'write-excel-file/browser';
 import { taxonomyByCode } from '../data/taxonomy';
+import { hasComparativeCashFlowSummary } from '../domain/cashFlowAvailability';
 import { calculateRatioSchedule } from '../domain/ratios';
 import type { FinancialStatements, KpiSet, ValidationResult, WorkspaceData } from '../domain/types';
 
@@ -11,11 +12,13 @@ const cell = (value: Value, style: Partial<CellObject> = {}): Cell => ({ value, 
 const moneyCell = (paise: number, style: Partial<CellObject> = {}): Cell => cell(paise / 100, { format: moneyFormat, align: 'right', ...style });
 const ratioCell = (value: number | null): Cell => value === null ? cell('N/A') : cell(value, { format: '0.0000', align: 'right' });
 
-function statementSheet(title: string, lines: FinancialStatements['balanceSheet'], workspace: WorkspaceData): SheetData {
+function statementSheet(title: string, lines: FinancialStatements['balanceSheet'], workspace: WorkspaceData, comparativeUnavailable = false): SheetData {
   const rows: SheetData = [
     [cell(workspace.company.legalName, titleStyle)],
     [cell(title, { ...titleStyle, fontSize: 13 })],
-    [cell(`Schedule III Division I · ${workspace.period.label} · amounts in INR`, { textColor: '#6D7774' })],
+    [cell(comparativeUnavailable
+      ? `Schedule III Division I · ${workspace.period.label} · amounts in INR · comparative cash-flow details not supplied`
+      : `Schedule III Division I · ${workspace.period.label} · amounts in INR`, { textColor: '#6D7774' })],
     [cell('Particulars', headerStyle), cell('Note', headerStyle), cell(workspace.period.label, headerStyle), cell(workspace.period.comparativeLabel, headerStyle)]
   ];
   for (const line of lines) {
@@ -24,7 +27,7 @@ function statementSheet(title: string, lines: FinancialStatements['balanceSheet'
       cell(line.label, { fontWeight: isStrong ? 'bold' : undefined, backgroundColor: line.kind === 'SECTION' ? '#F2F0E9' : undefined, indent: line.depth }),
       cell(line.noteNumber ?? '', { align: 'center' }),
       moneyCell(line.currentPaise, { fontWeight: isStrong ? 'bold' : undefined }),
-      moneyCell(line.comparativePaise, { fontWeight: isStrong ? 'bold' : undefined })
+      comparativeUnavailable ? cell('Not supplied', { textColor: '#755622' }) : moneyCell(line.comparativePaise, { fontWeight: isStrong ? 'bold' : undefined })
     ]);
   }
   return rows;
@@ -120,7 +123,7 @@ export async function exportFinancialWorkbook(
     { sheet: 'Cover', data: cover, columns: [{ width: 34 }, { width: 90 }], stickyRowsCount: 2 },
     { sheet: 'Balance Sheet', data: statementSheet('Balance Sheet', statements.balanceSheet, workspace), columns: [{ width: 42 }, { width: 10 }, { width: 18 }, { width: 18 }], stickyRowsCount: 4 },
     { sheet: 'Profit and Loss', data: statementSheet('Statement of Profit and Loss', statements.profitAndLoss, workspace), columns: [{ width: 42 }, { width: 10 }, { width: 18 }, { width: 18 }], stickyRowsCount: 4 },
-    { sheet: 'Cash Flow', data: statementSheet('Cash Flow Statement', statements.cashFlow, workspace), columns: [{ width: 48 }, { width: 10 }, { width: 18 }, { width: 18 }], stickyRowsCount: 4 },
+    { sheet: 'Cash Flow', data: statementSheet('Cash Flow Statement', statements.cashFlow, workspace, !hasComparativeCashFlowSummary(workspace.period)), columns: [{ width: 48 }, { width: 10 }, { width: 18 }, { width: 18 }], stickyRowsCount: 4 },
     { sheet: 'Notes to Accounts', data: notes, columns: [{ width: 9 }, { width: 34 }, { width: 34 }, { width: 18 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 90 }], stickyRowsCount: 1 },
     { sheet: 'Ratios', data: ratios, columns: [{ width: 34 }, { width: 50 }, { width: 18 }, { width: 18 }, { width: 22 }, { width: 38 }, { width: 28 }], stickyRowsCount: 1 },
     { sheet: 'Trial Balance', data: tb, columns: [{ width: 15 }, { width: 42 }, { width: 28 }, { width: 18 }, { width: 18 }, { width: 18 }], stickyRowsCount: 1 },

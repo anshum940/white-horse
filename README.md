@@ -14,7 +14,7 @@ The login is a polished client-side cover for the public study demo, not a secur
 
 - Adaptive XLSX/CSV/TSV/TXT Trial Balance preview, worksheet/header detection, manual column mapping, validation, versioned activation, and source-row traceability
 - A vendor-neutral, eight-column Standard TB template (`WH-TB-1.0`) in CSV and XLSX for the most repeatable import path
-- Three parser-verified, balanced `WH-TB-1.0` sample workbooks for manufacturing, digital services, and food distribution demonstrations
+- Three end-to-end-reconciled `WH-TB-1.0` sample workbooks for manufacturing, digital services, and food distribution demonstrations
 - Independent company workspaces, reporting periods, materiality settings, display scales, and local role records
 - A branded White Horse study-access cover, tab-scoped access marker, sign-out, and an explicitly labelled public-demo security boundary
 - 21-character CIN format controls, non-overlapping comparative periods, and current financial-year defaults
@@ -24,7 +24,7 @@ The login is a polished client-side cover for the public study demo, not a secur
 - Thirty structured notes/disclosure workpapers, factual company/data-derived disclosure text, ledger-level comparative schedules, truthful PPE/intangible net carrying-amount bridges, and twelve transparent analytical ratios
 - Blocking comparative-TB, duplicate-mapping, malformed-journal, orphan-ledger, and comparative-Balance-Sheet controls in addition to current-period reconciliations
 - Comparative notes, review rules, finalisation gates, and hash-linked audit events
-- One-click 11-sheet Excel pack, CSV extracts, a six-section A4 browser PDF pack, optional Director/CA signing blocks, plain backup, and PBKDF2/AES-GCM encrypted backup flows
+- One-click 11-sheet Excel pack, CSV extracts, a six-section A4 browser PDF pack, optional one- or two-Director/CA unsigned signing blocks, plain backup, and PBKDF2/AES-GCM encrypted backup flows
 - IndexedDB persistence and a service-worker application shell for offline use
 - A global, once-confirmed factory reset that atomically removes every browser-local workspace and restores only the synthetic demonstration
 
@@ -45,6 +45,8 @@ Ledger Code, Ledger Name, Group, Subgroup, Closing Debit, Closing Credit, Previo
 Amounts must be in INR, not lakhs or crores, and closing debits must equal closing credits exactly. The adaptive importer skips blank/title rows and exact total rows, but the preview and totals must still be reviewed before activation. Download [the source-controlled CSV template](samples/white-horse-tb-template.csv) or read the complete [Trial Balance import specification](docs/TRIAL_BALANCE_IMPORT_FORMAT.md). The application provides both templates and three verified demonstration workbooks from **Trial Balance → Import Trial Balance**. The standard XLSX keeps the blank import sheet separate from its instructions and worked example.
 
 Verified synthetic workbooks: [Meridian Manufacturing](public/samples/Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx), [BluePeak Digital Services](public/samples/Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx), and [GreenTrail Foods](public/samples/Sample_GreenTrail_Foods_TB_FY2025-26.xlsx). Each uses different ledger data and contains a separate instructions sheet.
+
+The sample tests verify mapped Balance Sheets and current-year cash flow, not merely a balanced raw TB. Each workbook's Instructions sheet states the assumptions required for its zero-input demo scenario. A two-year closing TB does not establish the earlier year's cash-flow movements, so White Horse marks an unsupplied comparative cash-flow column unavailable rather than reporting false zeros. Director signing settings now allow an additional named Director and distinct eight-digit DIN; these remain unsigned placeholders, not an electronic signature or Board approval.
 
 ## Data and privacy model
 

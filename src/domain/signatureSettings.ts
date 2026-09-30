@@ -1,7 +1,8 @@
-import type { StatementSignatureSettings } from './types';
+import type { DirectorSignatory, StatementSignatureSettings } from './types';
 
 export type SignatureSettingsField = keyof StatementSignatureSettings;
-export type SignatureSettingsErrors = Partial<Record<SignatureSettingsField, string>>;
+export type SignatureSettingsErrors = Record<string, string>;
+export const MAX_DIRECTOR_SIGNATORIES = 2;
 
 export function defaultStatementSignatureSettings(periodEndDate: string, registeredOffice = ''): StatementSignatureSettings {
   return {
@@ -9,6 +10,7 @@ export function defaultStatementSignatureSettings(periodEndDate: string, registe
     directorName: '',
     directorDesignation: 'Director',
     directorDin: '',
+    additionalDirectors: [],
     showCharteredAccountant: false,
     caCapacity: 'PREPARER',
     caFirmName: '',
@@ -28,6 +30,11 @@ export function normaliseStatementSignatureSettings(settings: StatementSignature
     directorName: settings.directorName.trim(),
     directorDesignation: settings.directorDesignation.trim(),
     directorDin: settings.directorDin.replace(/\D/g, '').slice(0, 8),
+    additionalDirectors: (settings.additionalDirectors ?? []).map((director): DirectorSignatory => ({
+      name: director.name.trim(),
+      designation: director.designation.trim(),
+      din: director.din.replace(/\D/g, '').slice(0, 8)
+    })),
     caFirmName: settings.caFirmName.trim(),
     caFirmRegistrationNumber: settings.caFirmRegistrationNumber.trim().toUpperCase(),
     caName: settings.caName.trim(),
@@ -59,6 +66,18 @@ export function validateStatementSignatureSettings(
     required('directorName', 'Enter the director’s full name.');
     required('directorDesignation', 'Enter the director’s designation.');
     if (!/^\d{8}$/.test(settings.directorDin)) errors.directorDin = 'DIN must contain exactly 8 digits. This validates format only, not MCA status.';
+    const additional = settings.additionalDirectors ?? [];
+    if (additional.length > MAX_DIRECTOR_SIGNATORIES - 1) errors.additionalDirectors = `A maximum of ${MAX_DIRECTOR_SIGNATORIES} Director signing blocks fits the statement layout.`;
+    additional.forEach((director, index) => {
+      if (!director.name) errors[`additionalDirector.${index}.name`] = 'Enter the additional director’s full name.';
+      if (director.name.length > 150) errors[`additionalDirector.${index}.name`] = 'Use 150 characters or fewer.';
+      if (!director.designation) errors[`additionalDirector.${index}.designation`] = 'Enter the additional director’s designation.';
+      if (director.designation.length > 80) errors[`additionalDirector.${index}.designation`] = 'Use 80 characters or fewer.';
+      if (!/^\d{8}$/.test(director.din)) errors[`additionalDirector.${index}.din`] = 'DIN must contain exactly 8 digits. This validates format only, not MCA status.';
+      else if (director.din === settings.directorDin || additional.slice(0, index).some((other) => other.din === director.din)) {
+        errors[`additionalDirector.${index}.din`] = 'Each Director signing block needs a different DIN.';
+      }
+    });
   }
 
   if (settings.showCharteredAccountant) {

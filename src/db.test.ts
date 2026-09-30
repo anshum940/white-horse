@@ -77,6 +77,7 @@ describe('company workspace database controls', () => {
       showDirector: true,
       directorName: 'Asha Rao',
       directorDin: '12345678',
+      additionalDirectors: [{ name: 'Neha Kapoor', designation: 'Managing Director', din: '87654321' }],
       showCharteredAccountant: true,
       caFirmName: 'Rao & Co.',
       caName: 'Vikram Rao',
@@ -87,6 +88,7 @@ describe('company workspace database controls', () => {
     expect(reloaded?.period.signatureSettings).toMatchObject({
       showDirector: true,
       directorDin: '12345678',
+      additionalDirectors: [{ name: 'Neha Kapoor', designation: 'Managing Director', din: '87654321' }],
       showCharteredAccountant: true,
       caMembershipNumber: '123456'
     });

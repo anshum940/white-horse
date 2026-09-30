@@ -6,15 +6,15 @@ White Horse can read many tabular Trial Balance exports directly and provides a 
 
 Downloadable templates are available inside **Trial Balance → Standard TB template** in both CSV and XLSX formats. The XLSX contains a blank sheet named `Trial Balance Import`, an `Instructions` sheet, and a separate `Worked Example` sheet. White Horse scans candidate worksheets and deliberately excludes clearly named instruction/example/sample sheets from automatic selection whenever another sheet exists; the user can still select any worksheet and header row explicitly. The repository CSV copy is `samples/white-horse-tb-template.csv`.
 
-The import dialog also provides three synthetic, parser-verified examples in the exact `WH-TB-1.0` structure:
+The import dialog also provides three synthetic examples in the exact `WH-TB-1.0` structure. Automated tests parse each file, check every suggested taxonomy mapping, prepare current/comparative Balance Sheets and current-year cash flow, and require no blocking/error/warning findings for the documented zero-input demo scenario:
 
 | Workbook | Industry | Current debit = credit | Comparative debit = credit |
 | --- | --- | ---: | ---: |
-| `Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx` | Manufacturing | ₹117,400,000 | ₹100,300,000 |
-| `Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx` | Digital services | ₹51,200,000 | ₹36,550,000 |
-| `Sample_GreenTrail_Foods_TB_FY2025-26.xlsx` | Food distribution | ₹120,300,000 | ₹98,700,000 |
+| `Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx` | Manufacturing | ₹63,700,000 | ₹56,000,000 |
+| `Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx` | Digital services | ₹18,350,000 | ₹14,500,000 |
+| `Sample_GreenTrail_Foods_TB_FY2025-26.xlsx` | Food distribution | ₹31,150,000 | ₹25,500,000 |
 
-These workbooks contain synthetic study data only. Each has the eight import columns on the first sheet and an instructions sheet after it. They are examples of a valid interchange format, not evidence that their classifications or disclosures are appropriate for a real entity.
+These workbooks contain synthetic study data only. Each has the eight import columns on the first sheet and a scenario/instructions sheet after it. For each scenario, PPE falls by depreciation with no additions/disposals, the current tax expense remains payable with no cash tax paid, and prior-year profit rolls into retained earnings. These are explicit fictional assumptions that allow the app's default zero cash-flow inputs to reconcile; they are not general rules for a real entity. Comparative cash-flow details are not supplied by a two-year closing TB and are displayed as unavailable rather than zero until a separate comparative cash-flow summary exists. Suggested classifications and all entity-specific disclosures still require professional review.
 
 ## Adaptive import workflow
 

@@ -380,6 +380,22 @@ function duplicateMappingErrors(map: TrialBalanceColumnMap): string[] {
 
 export function suggestTaxonomyCode(name: string, group: string, subGroup: string): string | undefined {
   const value = `${name} ${group} ${subGroup}`.toLowerCase();
+  const accountClass = group.toLowerCase();
+  // Source account class takes precedence over keywords shared by balance-sheet
+  // and P&L heads (for example "employee benefits" and "raw materials").
+  if (/expense|cost|expenditure|purchases/.test(accountClass)) {
+    if (/current tax expense|income tax expense/.test(value)) return 'PL-EXP-TAX-CURRENT';
+    if (/deferred tax expense/.test(value)) return 'PL-EXP-TAX-DEFERRED';
+    if (/depreciation|amortisation|amortization/.test(value)) return 'PL-EXP-DEPRECIATION';
+    if (/finance cost|interest on|borrowing cost/.test(value)) return 'PL-EXP-FINANCE';
+    if (/material consumed|materials consumed|cost of goods|purchases|raw material/.test(value)) return 'PL-EXP-MATERIAL';
+    if (/salary|salaries|wage|employee|staff|payroll/.test(value)) return 'PL-EXP-EMPLOYEE';
+    return 'PL-EXP-OTHER';
+  }
+  if (/income|revenue|sales/.test(accountClass)) {
+    if (/other income|interest income|miscellaneous income/.test(value)) return 'PL-REV-OTHER';
+    if (/revenue|sales|sale of|service income/.test(value)) return 'PL-REV-OPERATIONS';
+  }
   const rules: Array<[RegExp, string]> = [
     [/share capital/, 'BS-EQ-CAPITAL'], [/reserve|retained|surplus/, 'BS-EQ-RESERVES'],
     [/term loan|long.?term borrow/, 'BS-NCL-BORROWING'], [/working capital|cash credit|short.?term borrow/, 'BS-CL-BORROWING'],

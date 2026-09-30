@@ -16,10 +16,17 @@ export function StatementSignatures({ settings }: { settings?: StatementSignatur
       <div className="signature-column signature-director">
         {settings.showDirector && <>
           <p>For and on behalf of the Board</p>
-          <span className="signature-line">Director signature</span>
-          <strong>{settings.directorName}</strong>
-          <span>{settings.directorDesignation}</span>
-          <span>DIN: {settings.directorDin}</span>
+          <div className={`signature-director-people ${(settings.additionalDirectors?.length ?? 0) > 0 ? 'multiple' : ''}`}>
+            {[
+              { name: settings.directorName, designation: settings.directorDesignation, din: settings.directorDin },
+              ...(settings.additionalDirectors ?? [])
+            ].map((director, index) => <div className="signature-director-person" key={`${director.din}-${index}`}>
+              <span className="signature-line">Director signature</span>
+              <strong>{director.name}</strong>
+              <span>{director.designation}</span>
+              <span>DIN: {director.din}</span>
+            </div>)}
+          </div>
           <small>Place: {settings.place}<br/>Date: {signingDate}</small>
         </>}
       </div>

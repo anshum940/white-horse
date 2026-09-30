@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { updateStatementSignatureSettings } from '../db';
+import { hasComparativeCashFlowSummary } from '../domain/cashFlowAvailability';
 import { formatMoney } from '../domain/money';
 import {
+  MAX_DIRECTOR_SIGNATORIES,
   defaultStatementSignatureSettings,
   normaliseStatementSignatureSettings,
   validateStatementSignatureSettings
 } from '../domain/signatureSettings';
-import type { FinancialStatements, KpiSet, ReportLine, StatementSignatureSettings, ValidationResult, WorkspaceData } from '../domain/types';
+import type { DirectorSignatory, FinancialStatements, KpiSet, ReportLine, StatementSignatureSettings, ValidationResult, WorkspaceData } from '../domain/types';
 import { exportFinancialWorkbook } from '../services/excelExport';
 import { FinancialPdfPack } from '../components/FinancialPdfPack';
 import { Icon } from '../components/Icon';
@@ -34,7 +36,7 @@ export function StatementsPage({
   const [signatureOpen, setSignatureOpen] = useState(false);
   const [signatureBusy, setSignatureBusy] = useState(false);
   const [signatureSubmitted, setSignatureSubmitted] = useState(false);
-  const [signatureDraft, setSignatureDraft] = useState<StatementSignatureSettings>(() => workspace.period.signatureSettings ?? defaultStatementSignatureSettings(workspace.period.endDate, workspace.company.registeredOffice));
+  const [signatureDraft, setSignatureDraft] = useState<StatementSignatureSettings>(() => normaliseStatementSignatureSettings(workspace.period.signatureSettings ?? defaultStatementSignatureSettings(workspace.period.endDate, workspace.company.registeredOffice)));
   const signatureErrors = useMemo(
     () => validateStatementSignatureSettings(signatureDraft, { periodEndDate: workspace.period.endDate }),
     [signatureDraft, workspace.period.endDate]
@@ -65,13 +67,36 @@ export function StatementsPage({
   }
 
   function openSignatureSettings() {
-    setSignatureDraft(workspace.period.signatureSettings ?? defaultStatementSignatureSettings(workspace.period.endDate, workspace.company.registeredOffice));
+    setSignatureDraft(normaliseStatementSignatureSettings(workspace.period.signatureSettings ?? defaultStatementSignatureSettings(workspace.period.endDate, workspace.company.registeredOffice)));
     setSignatureSubmitted(false);
     setSignatureOpen(true);
   }
 
   function updateSignatureField<K extends keyof StatementSignatureSettings>(field: K, value: StatementSignatureSettings[K]) {
     setSignatureDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function updateAdditionalDirector(index: number, field: keyof DirectorSignatory, value: string) {
+    setSignatureDraft((current) => ({
+      ...current,
+      additionalDirectors: (current.additionalDirectors ?? []).map((director, itemIndex) => itemIndex === index ? { ...director, [field]: value } : director)
+    }));
+  }
+
+  function addDirector() {
+    setSignatureDraft((current) => ({
+      ...current,
+      additionalDirectors: (current.additionalDirectors ?? []).length < MAX_DIRECTOR_SIGNATORIES - 1
+        ? [...(current.additionalDirectors ?? []), { name: '', designation: 'Director', din: '' }]
+        : current.additionalDirectors
+    }));
+  }
+
+  function removeDirector(index: number) {
+    setSignatureDraft((current) => ({
+      ...current,
+      additionalDirectors: (current.additionalDirectors ?? []).filter((_, itemIndex) => itemIndex !== index)
+    }));
   }
 
   async function saveSignatureSettings() {
@@ -139,8 +164,10 @@ export function StatementsPage({
           currentLabel={workspace.period.label}
           comparativeLabel={workspace.period.comparativeLabel}
           scale={workspace.company.displayScale}
+          comparativeUnavailable={tab === 'cashFlow' && !hasComparativeCashFlowSummary(workspace.period)}
           onDrilldown={setDrilldown}
         />
+        {tab === 'cashFlow' && !hasComparativeCashFlowSummary(workspace.period) && <p className="statement-comparative-note">Comparative cash-flow details were not supplied. The prior-year column is intentionally left unavailable, not reported as zero.</p>}
         <StatementSignatures settings={workspace.period.signatureSettings}/>
         <footer className="report-footer-note">
           <p>See accompanying notes forming part of these financial statements.</p>
@@ -172,12 +199,22 @@ export function StatementsPage({
           <div className="message-box message-warning"><Icon name="warning"/><div><strong>Signing control</strong><p>These are unsigned text blocks and signature lines. White Horse does not apply a handwritten, electronic or digital signature. Confirm the signatories required by section 134 and attach the applicable auditor’s report before statutory use.</p></div></div>
           {workspace.period.status === 'FINALISED' && <div className="message-box message-error"><Icon name="lock"/><div><strong>Period finalised</strong><p>Reopen the reporting period before changing signing blocks.</p></div></div>}
           <section className="signature-settings-section">
-            <label className="signature-toggle"><input type="checkbox" checked={signatureDraft.showDirector} onChange={(event) => updateSignatureField('showDirector', event.target.checked)}/><span><strong>Show Director signature block</strong><small>Printed at the lower left of each face statement.</small></span></label>
-            {signatureDraft.showDirector && <div className="form-grid signature-fields">
+            <label className="signature-toggle"><input type="checkbox" checked={signatureDraft.showDirector} onChange={(event) => updateSignatureField('showDirector', event.target.checked)}/><span><strong>Show Director signing blocks</strong><small>Up to two Directors, printed at the lower left of each face statement.</small></span></label>
+            {signatureDraft.showDirector && <><div className="signature-director-heading"><strong>Director 1</strong></div><div className="form-grid signature-fields">
               <label className={`field ${signatureSubmitted && signatureErrors.directorName ? 'field-invalid' : ''}`}><span>Director full name *</span><input maxLength={150} value={signatureDraft.directorName} onChange={(event) => updateSignatureField('directorName', event.target.value)}/>{signatureSubmitted && signatureErrors.directorName && <small className="field-error">{signatureErrors.directorName}</small>}</label>
               <label className={`field ${signatureSubmitted && signatureErrors.directorDesignation ? 'field-invalid' : ''}`}><span>Designation *</span><input maxLength={80} value={signatureDraft.directorDesignation} onChange={(event) => updateSignatureField('directorDesignation', event.target.value)}/>{signatureSubmitted && signatureErrors.directorDesignation && <small className="field-error">{signatureErrors.directorDesignation}</small>}</label>
               <label className={`field ${signatureSubmitted && signatureErrors.directorDin ? 'field-invalid' : ''}`}><span>DIN *</span><input inputMode="numeric" maxLength={8} placeholder="8 digits" value={signatureDraft.directorDin} onChange={(event) => updateSignatureField('directorDin', event.target.value.replace(/\D/g, '').slice(0, 8))}/>{signatureSubmitted && signatureErrors.directorDin && <small className="field-error">{signatureErrors.directorDin}</small>}</label>
-            </div>}
+            </div>
+            {(signatureDraft.additionalDirectors ?? []).map((director, index) => <div key={index}>
+              <div className="signature-director-heading"><strong>Director {index + 2}</strong><button type="button" className="button button-secondary" onClick={() => removeDirector(index)}>Remove director</button></div>
+              <div className="form-grid signature-fields">
+                <label className={`field ${signatureSubmitted && signatureErrors[`additionalDirector.${index}.name`] ? 'field-invalid' : ''}`}><span>Director full name *</span><input maxLength={150} value={director.name} onChange={(event) => updateAdditionalDirector(index, 'name', event.target.value)}/>{signatureSubmitted && signatureErrors[`additionalDirector.${index}.name`] && <small className="field-error">{signatureErrors[`additionalDirector.${index}.name`]}</small>}</label>
+                <label className={`field ${signatureSubmitted && signatureErrors[`additionalDirector.${index}.designation`] ? 'field-invalid' : ''}`}><span>Designation *</span><input maxLength={80} value={director.designation} onChange={(event) => updateAdditionalDirector(index, 'designation', event.target.value)}/>{signatureSubmitted && signatureErrors[`additionalDirector.${index}.designation`] && <small className="field-error">{signatureErrors[`additionalDirector.${index}.designation`]}</small>}</label>
+                <label className={`field ${signatureSubmitted && signatureErrors[`additionalDirector.${index}.din`] ? 'field-invalid' : ''}`}><span>DIN *</span><input inputMode="numeric" maxLength={8} placeholder="8 digits" value={director.din} onChange={(event) => updateAdditionalDirector(index, 'din', event.target.value.replace(/\D/g, '').slice(0, 8))}/>{signatureSubmitted && signatureErrors[`additionalDirector.${index}.din`] && <small className="field-error">{signatureErrors[`additionalDirector.${index}.din`]}</small>}</label>
+              </div>
+            </div>)}
+            {(signatureDraft.additionalDirectors?.length ?? 0) < MAX_DIRECTOR_SIGNATORIES - 1 && <button type="button" className="button button-secondary signature-director-add" onClick={addDirector}>+ Add another director</button>}
+            </>}
           </section>
           <section className="signature-settings-section">
             <label className="signature-toggle"><input type="checkbox" checked={signatureDraft.showCharteredAccountant} onChange={(event) => updateSignatureField('showCharteredAccountant', event.target.checked)}/><span><strong>Show Chartered Accountant signature block</strong><small>Printed at the lower right of each face statement.</small></span></label>

@@ -44,4 +44,28 @@ describe('statement signature settings', () => {
     expect(settings.directorName).toBe('Director One');
     expect(validateStatementSignatureSettings(settings, { periodEndDate: '2026-03-31' }).signingDate).toContain('cannot be before');
   });
+
+  it('preserves legacy settings and validates a second Director independently', () => {
+    const legacy = {
+      ...defaultStatementSignatureSettings('2026-03-31'),
+      showDirector: true,
+      directorName: 'Director One',
+      directorDin: '12345678',
+      place: 'Pune'
+    };
+    delete (legacy as { additionalDirectors?: unknown }).additionalDirectors;
+    expect(normaliseStatementSignatureSettings(legacy).additionalDirectors).toEqual([]);
+
+    const withSecond = normaliseStatementSignatureSettings({
+      ...legacy,
+      additionalDirectors: [{ name: ' Director Two ', designation: ' Managing Director ', din: '87 65-4321' }]
+    });
+    expect(withSecond.additionalDirectors).toEqual([{ name: 'Director Two', designation: 'Managing Director', din: '87654321' }]);
+    expect(validateStatementSignatureSettings(withSecond, { periodEndDate: '2026-03-31' })).toEqual({});
+    expect(validateStatementSignatureSettings({ ...withSecond, additionalDirectors: [{ name: '', designation: 'Director', din: '12345678' }] }))
+      .toMatchObject({
+        'additionalDirector.0.name': 'Enter the additional director’s full name.',
+        'additionalDirector.0.din': 'Each Director signing block needs a different DIN.'
+      });
+  });
 });

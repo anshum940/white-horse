@@ -1,4 +1,5 @@
 import { calculateRatioSchedule, formatRatioValue } from '../domain/ratios';
+import { hasComparativeCashFlowSummary } from '../domain/cashFlowAvailability';
 import { formatMoney } from '../domain/money';
 import { buildNoteSchedule } from '../domain/noteSchedules';
 import type { FinancialStatements, KpiSet, ReportLine, WorkspaceData } from '../domain/types';
@@ -15,6 +16,7 @@ function ReportHeader({ workspace, label }: { workspace: WorkspaceData; label: s
 }
 
 function StatementPage({ workspace, title, lines }: { workspace: WorkspaceData; title: string; lines: ReportLine[] }) {
+  const comparativeUnavailable = title === 'Cash Flow Statement' && !hasComparativeCashFlowSummary(workspace.period);
   const pageClassName = title === 'Balance Sheet'
     ? 'pdf-page pdf-statement-page pdf-balance-sheet-page'
     : 'pdf-page pdf-statement-page';
@@ -33,7 +35,9 @@ function StatementPage({ workspace, title, lines }: { workspace: WorkspaceData; 
         currentLabel={workspace.period.label}
         comparativeLabel={workspace.period.comparativeLabel}
         scale={workspace.company.displayScale}
+        comparativeUnavailable={comparativeUnavailable}
       />
+      {comparativeUnavailable && <p className="statement-comparative-note">Comparative cash-flow details were not supplied; amounts are unavailable rather than zero.</p>}
       <div className="pdf-statement-tail">
         <p>See accompanying notes forming part of these financial statements.</p>
         <StatementSignatures settings={workspace.period.signatureSettings}/>

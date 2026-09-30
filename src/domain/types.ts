@@ -48,11 +48,19 @@ export interface CashFlowInputs {
 
 export type CharteredAccountantCapacity = 'PREPARER' | 'COMPILER' | 'STATUTORY_AUDITOR';
 
+export interface DirectorSignatory {
+  name: string;
+  designation: string;
+  din: string;
+}
+
 export interface StatementSignatureSettings {
   showDirector: boolean;
   directorName: string;
   directorDesignation: string;
   directorDin: string;
+  /** Optional to keep previously saved single-director periods readable. */
+  additionalDirectors?: DirectorSignatory[];
   showCharteredAccountant: boolean;
   caCapacity: CharteredAccountantCapacity;
   caFirmName: string;

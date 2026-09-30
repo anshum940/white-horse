@@ -17,6 +17,7 @@ describe('financial PDF print pack', () => {
           showDirector: true,
           directorName: 'Asha Rao',
           directorDin: '12345678',
+          additionalDirectors: [{ name: 'Neha Kapoor', designation: 'Managing Director', din: '87654321' }],
           showCharteredAccountant: true,
           caFirmName: 'Rao & Co.',
           caName: 'Vikram Rao',
@@ -46,8 +47,26 @@ describe('financial PDF print pack', () => {
     expect(html).toContain('Analytical ratio schedule');
     expect(html).toContain('Asha Rao');
     expect(html).toContain('DIN: 12345678');
+    expect(html).toContain('Neha Kapoor');
+    expect(html).toContain('DIN: 87654321');
     expect(html).toContain('Vikram Rao');
     expect(html).toContain('Membership No.: 123456');
     expect(html.indexOf('EQUITY AND LIABILITIES')).toBeLessThan(html.indexOf('ASSETS'));
+  });
+
+  it('does not report an unsupplied comparative cash-flow summary as zero', () => {
+    const workspace = {
+      ...demoDataset,
+      period: {
+        ...demoDataset.period,
+        comparativeCashFlowSummary: { operating: 0, investing: 0, financing: 0, openingCash: 0 }
+      }
+    };
+    const context = { period: workspace.period, ledgers: workspace.ledgers, mappings: workspace.mappings, adjustments: workspace.adjustments, adjustmentLines: workspace.adjustmentLines, taxonomy };
+    const statements = calculateFinancialStatements(context);
+    const kpis = calculateKpis(context, statements);
+    const html = renderToStaticMarkup(<FinancialPdfPack workspace={workspace} statements={statements} kpis={kpis}/>);
+    expect(html).toContain('Comparative cash-flow details were not supplied');
+    expect(html).toContain('<td class="amount-column">—</td>');
   });
 });

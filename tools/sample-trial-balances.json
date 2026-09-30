@@ -1,0 +1,81 @@
+[
+  {
+    "fileName": "Sample_Meridian_Manufacturing_TB_FY2025-26.xlsx",
+    "company": "Meridian Manufacturing Private Limited",
+    "industry": "Manufacturing",
+    "scenario": "No asset additions or disposals in FY 2025-26. PPE falls by current-year depreciation of INR 1,200,000. The INR 600,000 current tax expense remains payable at year-end; no cash tax payment is assumed. Prior-year profit of INR 1,500,000 was transferred to retained earnings. No dividend, interest or other income is included.",
+    "rows": [
+      ["MM1001", "Plant and machinery - net block", "Assets", "Property, plant and equipment", 11000000, 12000000],
+      ["MM1002", "Factory building - net block", "Assets", "Property, plant and equipment", 3800000, 4000000],
+      ["MM1101", "Raw material inventory", "Assets", "Inventories", 3000000, 2400000],
+      ["MM1102", "Finished goods inventory", "Assets", "Inventories", 2000000, 1600000],
+      ["MM1201", "Trade receivables - customers", "Assets", "Trade receivables", 4000000, 3000000],
+      ["MM1301", "Cash and bank balances", "Assets", "Cash and cash equivalents", 7400000, 4000000],
+      ["MM1401", "Prepaid insurance", "Assets", "Prepayments", 700000, 500000],
+      ["MM2001", "Equity share capital", "Equity", "Share capital", -12000000, -12000000],
+      ["MM2101", "Retained earnings - opening balance", "Equity", "Reserves and surplus", -3500000, -2000000],
+      ["MM2201", "Term loan from bank", "Liabilities", "Long-term borrowings", -7500000, -8000000],
+      ["MM2401", "Trade payables - suppliers", "Liabilities", "Trade payables", -3800000, -3000000],
+      ["MM2501", "Other current liabilities - accruals", "Liabilities", "Other current liabilities", -900000, -600000],
+      ["MM2601", "Current tax liabilities", "Liabilities", "Current tax liabilities", -1000000, -400000],
+      ["MM3001", "Revenue from operations - manufactured goods", "Income", "Revenue from operations", -35000000, -30000000],
+      ["MM4001", "Cost of material consumed", "Expenses", "Materials consumed", 22000000, 20000000],
+      ["MM4101", "Employee benefits expense", "Expenses", "Employee benefits", 4500000, 4000000],
+      ["MM4201", "Other operating expenses", "Expenses", "Other expenses", 3500000, 3000000],
+      ["MM4301", "Depreciation and amortisation expense", "Expenses", "Depreciation", 1200000, 1000000],
+      ["MM4501", "Current tax expense", "Expenses", "Current tax", 600000, 500000]
+    ]
+  },
+  {
+    "fileName": "Sample_BluePeak_Digital_Services_TB_FY2025-26.xlsx",
+    "company": "BluePeak Digital Services Private Limited",
+    "industry": "Digital services",
+    "scenario": "No asset additions or disposals in FY 2025-26. Computer equipment falls by INR 400,000 depreciation; software has no current-year movement. The INR 300,000 current tax expense remains payable at year-end; no cash tax payment is assumed. Prior-year profit of INR 1,400,000 was transferred to retained earnings. No dividend, interest or other income is included.",
+    "rows": [
+      ["BP1001", "Computer equipment - net block", "Assets", "Property, plant and equipment", 1600000, 2000000],
+      ["BP1010", "Software - net block", "Assets", "Intangible assets", 1000000, 1000000],
+      ["BP1201", "Trade receivables - services", "Assets", "Trade receivables", 2800000, 2000000],
+      ["BP1301", "Cash and bank balances", "Assets", "Cash and cash equivalents", 4700000, 2600000],
+      ["BP1401", "Prepaid cloud costs", "Assets", "Prepayments", 300000, 200000],
+      ["BP1501", "Other current assets - deposits", "Assets", "Other current assets", 150000, 100000],
+      ["BP2001", "Equity share capital", "Equity", "Share capital", -4000000, -4000000],
+      ["BP2101", "Retained earnings - opening balance", "Equity", "Reserves and surplus", -1900000, -500000],
+      ["BP2201", "Term loan from bank", "Liabilities", "Long-term borrowings", -300000, -500000],
+      ["BP2401", "Trade payables - contractors", "Liabilities", "Trade payables", -1200000, -1000000],
+      ["BP2501", "Other current liabilities - accrued payroll", "Liabilities", "Other current liabilities", -550000, -400000],
+      ["BP2601", "Current tax liabilities", "Liabilities", "Current tax liabilities", -400000, -100000],
+      ["BP3001", "Revenue from operations - digital services", "Income", "Revenue from operations", -10000000, -8000000],
+      ["BP4101", "Employee benefits expense", "Expenses", "Employee benefits", 4800000, 4000000],
+      ["BP4201", "Other operating expenses - hosting and rent", "Expenses", "Other expenses", 2300000, 2000000],
+      ["BP4301", "Depreciation and amortisation expense", "Expenses", "Depreciation", 400000, 400000],
+      ["BP4501", "Current tax expense", "Expenses", "Current tax", 300000, 200000]
+    ]
+  },
+  {
+    "fileName": "Sample_GreenTrail_Foods_TB_FY2025-26.xlsx",
+    "company": "GreenTrail Foods Private Limited",
+    "industry": "Food distribution",
+    "scenario": "No asset additions or disposals in FY 2025-26. Vehicles and warehouse equipment fall by INR 600,000 depreciation in total. The INR 400,000 current tax expense remains payable at year-end; no cash tax payment is assumed. Prior-year profit of INR 1,200,000 was transferred to retained earnings. No dividend, interest or other income is included.",
+    "rows": [
+      ["GF1001", "Delivery vehicles - net block", "Assets", "Property, plant and equipment", 2550000, 3000000],
+      ["GF1002", "Warehouse equipment - net block", "Assets", "Property, plant and equipment", 850000, 1000000],
+      ["GF1101", "Finished goods inventory", "Assets", "Inventories", 3600000, 3000000],
+      ["GF1102", "Packaging inventory", "Assets", "Inventories", 1200000, 1000000],
+      ["GF1201", "Trade receivables - distributors", "Assets", "Trade receivables", 2500000, 2000000],
+      ["GF1301", "Cash and bank balances", "Assets", "Cash and cash equivalents", 3750000, 1400000],
+      ["GF1401", "Prepaid insurance", "Assets", "Prepayments", 400000, 300000],
+      ["GF2001", "Equity share capital", "Equity", "Share capital", -5000000, -5000000],
+      ["GF2101", "Retained earnings - opening balance", "Equity", "Reserves and surplus", -2200000, -1000000],
+      ["GF2201", "Term loan from bank", "Liabilities", "Long-term borrowings", -2500000, -2000000],
+      ["GF2401", "Trade payables - food suppliers", "Liabilities", "Trade payables", -2400000, -2000000],
+      ["GF2501", "Other current liabilities - accruals", "Liabilities", "Other current liabilities", -450000, -300000],
+      ["GF2601", "Current tax liabilities", "Liabilities", "Current tax liabilities", -600000, -200000],
+      ["GF3001", "Revenue from operations - packaged foods", "Income", "Revenue from operations", -18000000, -15000000],
+      ["GF4001", "Cost of material consumed", "Expenses", "Materials consumed", 11500000, 10000000],
+      ["GF4101", "Employee benefits expense", "Expenses", "Employee benefits", 1800000, 1500000],
+      ["GF4201", "Other operating expenses", "Expenses", "Other expenses", 2000000, 1500000],
+      ["GF4301", "Depreciation and amortisation expense", "Expenses", "Depreciation", 600000, 500000],
+      ["GF4501", "Current tax expense", "Expenses", "Current tax", 400000, 300000]
+    ]
+  }
+]

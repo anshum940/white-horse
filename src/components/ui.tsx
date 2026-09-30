@@ -94,12 +94,14 @@ export function StatementTable({
   currentLabel,
   comparativeLabel,
   scale = 'LAKHS',
+  comparativeUnavailable = false,
   onDrilldown
 }: {
   lines: ReportLine[];
   currentLabel: string;
   comparativeLabel: string;
   scale?: DisplayScale;
+  comparativeUnavailable?: boolean;
   onDrilldown?: (line: ReportLine) => void;
 }) {
   return (
@@ -128,7 +130,7 @@ export function StatementTable({
               </td>
               <td className="note-column">{line.noteNumber ?? ''}</td>
               <td className="amount-column">{line.kind === 'SECTION' ? '' : formatMoney(line.currentPaise, scale, { showZero: false })}</td>
-              <td className="amount-column">{line.kind === 'SECTION' ? '' : formatMoney(line.comparativePaise, scale, { showZero: false })}</td>
+              <td className="amount-column">{line.kind === 'SECTION' ? '' : comparativeUnavailable ? '—' : formatMoney(line.comparativePaise, scale, { showZero: false })}</td>
             </tr>
           ))}
         </tbody>

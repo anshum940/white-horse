@@ -276,7 +276,7 @@ export function TrialBalancePage({ workspace, notify }: { workspace: WorkspaceDa
             <div className="sample-tb-heading">
               <div>
                 <strong id="sample-tb-heading">Import-ready sample Trial Balances</strong>
-                <p>Use these synthetic, balanced workbooks to test the complete import flow. Each follows the White Horse standard format and contains different company data.</p>
+                <p>These synthetic workbooks pass import and statement-reconciliation checks in a new company workspace. Create/select the matching company first; importing one into the preloaded Saffron demo would mix unrelated company balances and cash-flow assumptions. Each workbook has its own Instructions sheet.</p>
               </div>
               <StatusBadge tone="green">VERIFIED</StatusBadge>
             </div>
