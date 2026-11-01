@@ -15,7 +15,7 @@
   "dependencies": {
     "dexie": "4.4.6",
     "dexie-react-hooks": "4.4.0",
-    "read-excel-file": "9.3.10",
+    "read-excel-file": "9.3.13",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "write-excel-file": "4.1.1"
